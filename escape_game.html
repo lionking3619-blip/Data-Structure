@@ -2,199 +2,205 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>고대 유적의 비밀: 스택 추리 탈출</title>
+    <title>고대 유적: 무지개 제단의 비밀</title>
     <style>
         :root {
-            --ancient-gold: #d4af37;
-            --stone-gray: #4b4b4b;
-            --deep-brown: #2c1e16;
+            --gold: #ffd700;
+            --stone: #3d3d3d;
         }
         body {
             background-color: #1a1a1a;
-            color: #e0d8b0;
-            font-family: 'Malgun Gothic', serif;
+            color: white;
+            font-family: 'Malgun Gothic', sans-serif;
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
         }
-        #game-box {
-            width: 90%;
-            max-width: 600px;
-            background: var(--deep-brown);
-            padding: 25px;
-            border: 4px solid var(--ancient-gold);
-            border-radius: 8px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        /* 게임 메인 화면 (유적 배경) */
+        #game-scene {
+            position: relative;
+            width: 800px;
+            height: 450px;
+            background: linear-gradient(to bottom, #2c1e16, #4b3621);
+            border: 10px solid #222;
+            overflow: hidden;
+            cursor: default;
         }
-        .screen {
-            background: #000;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            min-height: 120px;
-            border: 1px inset var(--ancient-gold);
-        }
-        .clue-text { font-style: italic; color: #ffeb3b; margin-top: 10px; }
-        
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        input {
-            flex: 1;
-            padding: 10px;
-            background: #333;
-            border: 1px solid var(--ancient-gold);
-            color: white;
-            font-size: 1.1em;
-        }
-        button {
-            padding: 10px 20px;
-            background: var(--ancient-gold);
-            border: none;
-            font-weight: bold;
+        /* 배경 벽화 (무지개 힌트) */
+        #mural {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 100px;
+            background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+            opacity: 0.3;
+            filter: blur(5px);
+            border-radius: 50px 50px 0 0;
             cursor: pointer;
-            transition: 0.3s;
         }
-        button:hover { background: #fff; }
-        button:disabled { background: #555; }
+        #mural:hover { opacity: 0.8; filter: blur(0); }
 
-        .stack-label { font-weight: bold; margin-bottom: 10px; display: block; }
-        #path-stack {
+        /* 클릭 가능한 보석들 */
+        .gem {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50% 0 50% 0;
+            transform: rotate(45deg);
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+            transition: transform 0.2s;
+        }
+        .gem:hover { transform: rotate(45deg) scale(1.2); }
+
+        /* 제단 (스택 시각화 영역) */
+        #altar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 250px;
+            background: rgba(0,0,0,0.5);
+            border: 3px solid var(--gold);
             display: flex;
-            flex-direction: column-reverse;
-            gap: 5px;
-            background: #222;
+            flex-direction: column-reverse; /* 아래서부터 쌓임 */
+            align-items: center;
             padding: 10px;
-            border-radius: 4px;
-            min-height: 100px;
+            gap: 5px;
         }
-        .stack-item {
-            background: var(--stone-gray);
-            padding: 8px;
+        .altar-label {
+            position: absolute;
+            bottom: -30px;
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        /* 줌인 모달 */
+        #zoom-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 10;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            border: 1px solid #666;
-            animation: pushAnim 0.4s ease-out;
         }
-        @keyframes pushAnim {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+
+        /* 컨트롤 및 상태 */
+        #ui-panel {
+            width: 800px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
+        .pop-btn {
+            padding: 15px 30px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+        .pop-btn:hover { background: #c0392b; }
     </style>
 </head>
 <body>
 
-    <h2>📜 고대 태양신의 비밀번호</h2>
+    <h1>🏺 제단의 봉인을 푸십시오</h1>
     
-    <div id="game-box">
-        <div class="screen" id="display">
-            </div>
+    <div id="game-scene">
+        <div id="mural" onclick="showZoom('낡은 벽화에 무지개빛 찬란한 순서가 기록되어 있습니다...')"></div>
+        
+        <div class="gem" style="background:red; top:300px; left:100px;" onclick="pushGem('Red')"></div>
+        <div class="gem" style="background:blue; top:150px; left:600px;" onclick="pushGem('Blue')"></div>
+        <div class="gem" style="background:yellow; top:350px; left:650px;" onclick="pushGem('Yellow')"></div>
+        <div class="gem" style="background:green; top:100px; left:150px;" onclick="pushGem('Green')"></div>
+        <div class="gem" style="background:orange; top:200px; left:50px;" onclick="pushGem('Orange')"></div>
+        <div class="gem" style="background:indigo; top:320px; left:550px;" onclick="pushGem('Indigo')"></div>
+        <div class="gem" style="background:violet; top:50px; left:680px;" onclick="pushGem('Violet')"></div>
 
-        <div class="input-group">
-            <input type="text" id="pw-input" placeholder="비밀번호 입력..." onkeyup="if(window.event.keyCode==13){checkPassword()}">
-            <button onclick="checkPassword()">확인 (Push)</button>
+        <div id="altar">
+            <div class="altar-label">에너지 스택 (LIFO)</div>
         </div>
 
-        <button id="back-btn" onclick="goBack()" style="width: 100%; margin-bottom: 20px;">이전 방으로 돌아가기 (Pop)</button>
+        <div id="zoom-overlay" onclick="this.style.display='none'">
+            <div id="zoom-content">
+                <h2 id="zoom-text"></h2>
+                <p>(클릭하면 닫힙니다)</p>
+            </div>
+        </div>
+    </div>
 
-        <span class="stack-label">현재 탐험 경로 스택:</span>
-        <div id="path-stack"></div>
+    <div id="ui-panel">
+        <div>
+            <h3>현재 상태: <span id="status">보석을 순서대로 쌓으세요.</span></h3>
+        </div>
+        <button class="pop-btn" onclick="popGem()">잘못 넣음 (Pop Last)</button>
     </div>
 
     <script>
-        // 방 정보 데이터 (추리 요소)
-        const rooms = [
-            {
-                name: "입구 (시작)",
-                desc: "유적의 문이 굳게 닫혀 있습니다. 문 위에는 <b>'낮이 가고 밤이 오면 뜨는 것'</b>이 그려져 있습니다.",
-                clue: "힌트: 밤하늘을 밝히는 두 글자",
-                pw: "달빛"
-            },
-            {
-                name: "상형문자의 방",
-                desc: "벽에 숫자들이 적혀 있습니다. '1, 2, 4, 8, ...' 다음 숫자가 이 방의 열쇠입니다.",
-                clue: "힌트: 2의 거듭제곱입니다.",
-                pw: "16"
-            },
-            {
-                name: "거울의 복도",
-                desc: "거울 속에 글자가 거꾸로 적혀 있습니다. [ <b>O F I L</b> ] 이 글자를 올바른 순서로 배열하세요.",
-                clue: "힌트: 이 게임의 핵심 알고리즘 원리(영문 4글자)입니다.",
-                pw: "LIFO"
-            },
-            {
-                name: "마지막 제단",
-                desc: "황금 조각상 아래에 문구가 있습니다. '시작은 <b>달빛</b>이었고, 끝은 <b>보물</b>이다.' 보물을 한글로 입력하세요.",
-                clue: "힌트: 보물",
-                pw: "보물"
-            }
-        ];
+        const answer = ["Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet"];
+        let stack = [];
 
-        let currentStage = 0;
-        let pathStack = ["입구 (시작)"];
-
-        function updateUI() {
-            const display = document.getElementById('display');
-            const stackView = document.getElementById('path-stack');
-            const backBtn = document.getElementById('back-btn');
-
-            // 화면 설명 업데이트
-            if (currentStage < rooms.length) {
-                display.innerHTML = `
-                    <strong>[${rooms[currentStage].name}]</strong><br>
-                    ${rooms[currentStage].desc}
-                    <div class="clue-text">${rooms[currentStage].clue}</div>
-                `;
-            } else {
-                display.innerHTML = "<strong>🎊 탈출 성공! 🎊</strong><br>모든 수수께끼를 풀고 유적의 보물을 손에 넣었습니다!";
-                document.querySelector('.input-group').style.display = 'none';
-            }
-
-            // 스택 시각화
-            stackView.innerHTML = '';
-            pathStack.forEach(room => {
-                const div = document.createElement('div');
-                div.className = 'stack-item';
-                div.innerText = room;
-                stackView.appendChild(div);
-            });
-
-            // 뒤로가기 버튼 제어 (Pop)
-            backBtn.disabled = pathStack.length <= 1 || currentStage >= rooms.length;
+        function pushGem(color) {
+            if (stack.length >= 7) return;
+            
+            stack.push(color);
+            renderStack();
+            checkWin();
         }
 
-        function checkPassword() {
-            const input = document.getElementById('pw-input');
-            const val = input.value.trim();
+        function popGem() {
+            if (stack.length === 0) return;
+            
+            const popped = stack.pop();
+            document.getElementById('status').innerText = `${popped} 보석을 제거했습니다.`;
+            renderStack();
+        }
 
-            if (currentStage < rooms.length) {
-                if (val === rooms[currentStage].pw) {
-                    currentStage++;
-                    if (currentStage < rooms.length) {
-                        pathStack.push(rooms[currentStage].name); // 성공 시 스택에 Push
-                    } else {
-                        pathStack.push("보물 방");
-                    }
-                    input.value = '';
-                    updateUI();
+        function renderStack() {
+            const altar = document.getElementById('altar');
+            // 라벨 제외하고 비우기
+            const items = altar.querySelectorAll('.stack-gem');
+            items.forEach(item => item.remove());
+
+            stack.forEach(color => {
+                const div = document.createElement('div');
+                div.className = 'stack-gem';
+                div.style.width = '80%';
+                div.style.height = '25px';
+                div.style.backgroundColor = color;
+                div.style.border = '2px solid white';
+                div.style.borderRadius = '5px';
+                altar.appendChild(div);
+            });
+        }
+
+        function checkWin() {
+            if (stack.length === 7) {
+                const isCorrect = stack.every((val, index) => val === answer[index]);
+                if (isCorrect) {
+                    document.getElementById('status').innerText = "🎉 봉인이 해제되었습니다! 보물방으로 이동합니다.";
+                    setTimeout(() => alert("성공! 당신은 진정한 스택 마스터입니다."), 500);
                 } else {
-                    alert("비밀번호가 틀렸습니다. 배경을 다시 확인해보세요!");
+                    document.getElementById('status').innerText = "순서가 틀렸습니다. 위에서부터 다시 꺼내세요!";
                 }
             }
         }
 
-        function goBack() {
-            if (pathStack.length > 1) {
-                pathStack.pop(); // 스택에서 마지막 방 제거 (Pop)
-                currentStage--;
-                updateUI();
-            }
+        function showZoom(text) {
+            const overlay = document.getElementById('zoom-overlay');
+            const zoomText = document.getElementById('zoom-text');
+            zoomText.innerText = text;
+            overlay.style.display = 'flex';
         }
-
-        // 초기 실행
-        updateUI();
     </script>
 </body>
 </html>
