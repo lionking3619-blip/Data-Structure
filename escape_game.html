@@ -2,205 +2,319 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>고대 유적: 무지개 제단의 비밀</title>
+    <title>고대 유적: 암호의 방</title>
     <style>
-        :root {
-            --gold: #ffd700;
-            --stone: #3d3d3d;
-        }
-        body {
-            background-color: #1a1a1a;
-            color: white;
-            font-family: 'Malgun Gothic', sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        /* 게임 메인 화면 (유적 배경) */
-        #game-scene {
+        :root { --gold: #d4af37; --stone: #2c2c2c; --highlight: #ffeb3b; }
+        body { background: #1a1a1a; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+        
+        /* 메인 게임 화면 */
+        #game-container {
             position: relative;
             width: 800px;
             height: 450px;
-            background: linear-gradient(to bottom, #2c1e16, #4b3621);
-            border: 10px solid #222;
+            background: #3e2723;
+            border: 10px solid #5d4037;
+            border-radius: 15px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
             overflow: hidden;
-            cursor: default;
         }
-        /* 배경 벽화 (무지개 힌트) */
-        #mural {
-            position: absolute;
-            top: 20px;
-            left: 50%;
+
+        /* 방 타이틀 */
+        #room-info { position: absolute; top: 20px; left: 20px; font-size: 1.5em; color: var(--gold); font-weight: bold; }
+
+        /* 오브젝트들 */
+        .obj { position: absolute; cursor: pointer; transition: 0.3s; filter: drop-shadow(0 0 5px black); }
+        .obj:hover { transform: scale(1.1); filter: brightness(1.2) drop-shadow(0 0 10px var(--gold)); }
+
+        /* 문 (Exit) */
+        #exit-door {
+            position: absolute; right: 50px; top: 150px;
+            width: 120px; height: 200px;
+            background: #1a1a1a; border: 5px solid var(--gold);
+            border-radius: 50% 50% 0 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: var(--gold);
+        }
+
+        /* 스택 표시 (제단) */
+        #altar-area {
+            position: absolute; bottom: 30px; left: 50%;
             transform: translateX(-50%);
-            width: 300px;
-            height: 100px;
-            background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
-            opacity: 0.3;
-            filter: blur(5px);
-            border-radius: 50px 50px 0 0;
-            cursor: pointer;
+            display: flex; flex-direction: column-reverse;
+            gap: 5px; min-width: 100px; align-items: center;
         }
-        #mural:hover { opacity: 0.8; filter: blur(0); }
+        .stack-piece {
+            padding: 5px 15px; background: var(--gold); color: black;
+            font-weight: bold; border-radius: 3px; border: 1px solid white;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* 클릭 가능한 보석들 */
-        .gem {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border-radius: 50% 0 50% 0;
-            transform: rotate(45deg);
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(255,255,255,0.5);
-            transition: transform 0.2s;
-        }
-        .gem:hover { transform: rotate(45deg) scale(1.2); }
+        /* 하단 UI */
+        #ui-panel { width: 800px; margin-top: 20px; display: flex; justify-content: space-between; }
+        .hint-box { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; width: 60%; border-left: 5px solid var(--gold); }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        
+        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .pop-btn { background: #c0392b; color: white; }
+        .door-btn { background: var(--gold); color: black; }
 
-        /* 제단 (스택 시각화 영역) */
-        #altar {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 150px;
-            height: 250px;
-            background: rgba(0,0,0,0.5);
-            border: 3px solid var(--gold);
-            display: flex;
-            flex-direction: column-reverse; /* 아래서부터 쌓임 */
-            align-items: center;
-            padding: 10px;
-            gap: 5px;
+        /* 모달 (암호 입력) */
+        #modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;
         }
-        .altar-label {
-            position: absolute;
-            bottom: -30px;
-            color: var(--gold);
-            font-weight: bold;
-        }
-
-        /* 줌인 모달 */
-        #zoom-overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 10;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        /* 컨트롤 및 상태 */
-        #ui-panel {
-            width: 800px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .pop-btn {
-            padding: 15px 30px;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1.1em;
-            cursor: pointer;
-        }
-        .pop-btn:hover { background: #c0392b; }
+        .modal-content { background: #333; padding: 30px; border-radius: 10px; text-align: center; border: 2px solid var(--gold); }
+        input { padding: 10px; font-size: 1.2em; width: 150px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h1>🏺 제단의 봉인을 푸십시오</h1>
-    
-    <div id="game-scene">
-        <div id="mural" onclick="showZoom('낡은 벽화에 무지개빛 찬란한 순서가 기록되어 있습니다...')"></div>
+    <h2 style="color:var(--gold)">🏺 고대 유적 탐사: 10개의 문</h2>
+
+    <div id="game-container">
+        <div id="room-info">Room 1: 시각의 방</div>
         
-        <div class="gem" style="background:red; top:300px; left:100px;" onclick="pushGem('Red')"></div>
-        <div class="gem" style="background:blue; top:150px; left:600px;" onclick="pushGem('Blue')"></div>
-        <div class="gem" style="background:yellow; top:350px; left:650px;" onclick="pushGem('Yellow')"></div>
-        <div class="gem" style="background:green; top:100px; left:150px;" onclick="pushGem('Green')"></div>
-        <div class="gem" style="background:orange; top:200px; left:50px;" onclick="pushGem('Orange')"></div>
-        <div class="gem" style="background:indigo; top:320px; left:550px;" onclick="pushGem('Indigo')"></div>
-        <div class="gem" style="background:violet; top:50px; left:680px;" onclick="pushGem('Violet')"></div>
+        <div id="exit-door" onclick="openDoorModal()">🔒 CLOSED</div>
 
-        <div id="altar">
-            <div class="altar-label">에너지 스택 (LIFO)</div>
+        <div id="objects-layer"></div>
+
+        <div id="altar-area"></div>
+    </div>
+
+    <div id="ui-panel">
+        <div class="hint-box" id="narrative">
+            벽에 거대한 문이 있습니다. 주변의 물건들을 조사하여 문을 열 방법을 찾으세요. (오브젝트 클릭 시 스택에 쌓입니다.)
         </div>
+        <div class="btn-group">
+            <button class="pop-btn" onclick="popStack()">최근 행동 취소 (Pop)</button>
+        </div>
+    </div>
 
-        <div id="zoom-overlay" onclick="this.style.display='none'">
-            <div id="zoom-content">
-                <h2 id="zoom-text"></h2>
-                <p>(클릭하면 닫힙니다)</p>
+    <div id="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">문의 잠금장치</h3>
+            <p>비밀번호를 입력하십시오.</p>
+            <input type="text" id="pw-input">
+            <div style="margin-top:20px;">
+                <button class="door-btn" onclick="tryUnlock()">해제</button>
+                <button onclick="closeModal()">닫기</button>
             </div>
         </div>
     </div>
 
-    <div id="ui-panel">
-        <div>
-            <h3>현재 상태: <span id="status">보석을 순서대로 쌓으세요.</span></h3>
-        </div>
-        <button class="pop-btn" onclick="popGem()">잘못 넣음 (Pop Last)</button>
-    </div>
-
     <script>
-        const answer = ["Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet"];
-        let stack = [];
+        const rooms = [
+            {
+                title: "1. 색채의 조화",
+                hint: "벽화: '태양(Red)이 뜨고, 숲(Green)을 지나, 바다(Blue)로 진다.'",
+                objects: [
+                    { name: "빨간 구슬", val: "Red", pos: [300, 100], color: "red" },
+                    { name: "파란 구슬", val: "Blue", pos: [250, 250], color: "blue" },
+                    { name: "초록 구슬", val: "Green", pos: [320, 400], color: "green" }
+                ],
+                targetStack: ["Red", "Green", "Blue"],
+                code: "1052"
+            },
+            {
+                title: "2. 숫자의 계단",
+                hint: "바닥에 '1 - 2 - 3' 순서로 디딤돌을 밟으라는 문양이 있습니다.",
+                objects: [
+                    { name: "돌판 2", val: "2", pos: [200, 150], color: "#555" },
+                    { name: "돌판 1", val: "1", pos: [300, 300], color: "#555" },
+                    { name: "돌판 3", val: "3", pos: [150, 450], color: "#555" }
+                ],
+                targetStack: ["1", "2", "3"],
+                code: "7721"
+            },
+            {
+                title: "3. 사계절의 문",
+                hint: "조각상들: '봄(Spring)이 오면 꽃이 피고, 겨울(Winter)이 오면 눈이 내린다.'",
+                objects: [
+                    { name: "겨울 조각", val: "Winter", pos: [100, 100], color: "white" },
+                    { name: "봄 조각", val: "Spring", pos: [200, 400], color: "pink" }
+                ],
+                targetStack: ["Spring", "Winter"],
+                code: "0412"
+            },
+            {
+                title: "4. 크기의 질서",
+                hint: "항아리들: '가장 큰 것부터 작은 것 순으로 정리하십시오.'",
+                objects: [
+                    { name: "중간 항아리", val: "Mid", pos: [300, 100], color: "#8d6e63", size: "50px" },
+                    { name: "작은 항아리", val: "Small", pos: [320, 250], color: "#8d6e63", size: "30px" },
+                    { name: "큰 항아리", val: "Big", pos: [280, 400], color: "#8d6e63", size: "70px" }
+                ],
+                targetStack: ["Big", "Mid", "Small"],
+                code: "9090"
+            },
+            {
+                title: "5. 동서남북",
+                hint: "나침반: '동(E)쪽에서 해가 떠서 서(W)쪽으로 진다.'",
+                objects: [
+                    { name: "W", val: "W", pos: [100, 300], color: "#aaa" },
+                    { name: "E", val: "E", pos: [300, 300], color: "#aaa" }
+                ],
+                targetStack: ["E", "W"],
+                code: "1133"
+            },
+            {
+                title: "6. 피라미드",
+                hint: "계급: '노예(S) - 전사(W) - 왕(K)'. 아래에서 위로 쌓으세요.",
+                objects: [
+                    { name: "왕", val: "K", pos: [100, 100], color: "gold" },
+                    { name: "노예", val: "S", pos: [350, 100], color: "brown" },
+                    { name: "전사", val: "W", pos: [220, 100], color: "silver" }
+                ],
+                targetStack: ["S", "W", "K"],
+                code: "5555"
+            },
+            {
+                title: "7. 명암의 대비",
+                hint: "등불: '가장 밝은 것(Light)과 가장 어두운 것(Dark)'.",
+                objects: [
+                    { name: "어둠", val: "Dark", pos: [150, 400], color: "#111" },
+                    { name: "빛", val: "Light", pos: [150, 100], color: "#fff" }
+                ],
+                targetStack: ["Light", "Dark"],
+                code: "2468"
+            },
+            {
+                title: "8. 원소 술사",
+                hint: "제단: '불(F)은 얼음(I)을 녹인다.'",
+                objects: [
+                    { name: "얼음", val: "I", pos: [300, 200], color: "cyan" },
+                    { name: "불", val: "F", pos: [300, 450], color: "orange" }
+                ],
+                targetStack: ["F", "I"],
+                code: "9901"
+            },
+            {
+                title: "9. 거울 속의 나",
+                hint: "거울: '문구 [ L I F O ] 를 똑같이 입력하시오.'",
+                objects: [
+                    { name: "I", val: "I", pos: [200, 100], color: "#eee" },
+                    { name: "F", val: "F", pos: [200, 200], color: "#eee" },
+                    { name: "O", val: "O", pos: [200, 300], color: "#eee" },
+                    { name: "L", val: "L", pos: [200, 400], color: "#eee" }
+                ],
+                targetStack: ["L", "I", "F", "O"],
+                code: "1234"
+            },
+            {
+                title: "10. 마지막 심장",
+                hint: "보물함: '유물의 이름 [ G E M ] 을 완성하고 암호를 얻으세요.'",
+                objects: [
+                    { name: "M", val: "M", pos: [300, 100], color: "purple" },
+                    { name: "G", val: "G", pos: [300, 300], color: "purple" },
+                    { name: "E", val: "E", pos: [300, 500], color: "purple" }
+                ],
+                targetStack: ["G", "E", "M"],
+                code: "2026"
+            }
+        ];
 
-        function pushGem(color) {
-            if (stack.length >= 7) return;
+        let currentRoom = 0;
+        let userStack = [];
+        let isDoorUnlocked = false;
+
+        function initRoom() {
+            userStack = [];
+            isDoorUnlocked = false;
+            const room = rooms[currentRoom];
+            document.getElementById('room-info').innerText = room.title;
+            document.getElementById('narrative').innerText = room.hint;
+            document.getElementById('exit-door').innerText = "🔒 CLOSED";
+            document.getElementById('exit-door').style.borderColor = "var(--gold)";
             
-            stack.push(color);
+            const layers = document.getElementById('objects-layer');
+            layers.innerHTML = '';
+            
+            room.objects.forEach(obj => {
+                const el = document.createElement('div');
+                el.className = 'obj';
+                el.style.top = obj.pos[0] + 'px';
+                el.style.left = obj.pos[1] + 'px';
+                el.style.width = obj.size || '50px';
+                el.style.height = obj.size || '50px';
+                el.style.backgroundColor = obj.color;
+                el.style.borderRadius = '5px';
+                el.onclick = () => pushStack(obj.val);
+                layers.appendChild(el);
+            });
             renderStack();
-            checkWin();
         }
 
-        function popGem() {
-            if (stack.length === 0) return;
-            
-            const popped = stack.pop();
-            document.getElementById('status').innerText = `${popped} 보석을 제거했습니다.`;
+        function pushStack(val) {
+            if (isDoorUnlocked) return;
+            userStack.push(val);
             renderStack();
+            checkStack();
+        }
+
+        function popStack() {
+            if (isDoorUnlocked) return;
+            userStack.pop();
+            renderStack();
+            checkStack();
         }
 
         function renderStack() {
-            const altar = document.getElementById('altar');
-            // 라벨 제외하고 비우기
-            const items = altar.querySelectorAll('.stack-gem');
-            items.forEach(item => item.remove());
-
-            stack.forEach(color => {
+            const altar = document.getElementById('altar-area');
+            altar.innerHTML = '';
+            userStack.forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'stack-gem';
-                div.style.width = '80%';
-                div.style.height = '25px';
-                div.style.backgroundColor = color;
-                div.style.border = '2px solid white';
-                div.style.borderRadius = '5px';
+                div.className = 'stack-piece';
+                div.innerText = item;
                 altar.appendChild(div);
             });
         }
 
-        function checkWin() {
-            if (stack.length === 7) {
-                const isCorrect = stack.every((val, index) => val === answer[index]);
-                if (isCorrect) {
-                    document.getElementById('status').innerText = "🎉 봉인이 해제되었습니다! 보물방으로 이동합니다.";
-                    setTimeout(() => alert("성공! 당신은 진정한 스택 마스터입니다."), 500);
-                } else {
-                    document.getElementById('status').innerText = "순서가 틀렸습니다. 위에서부터 다시 꺼내세요!";
-                }
+        function checkStack() {
+            const target = rooms[currentRoom].targetStack;
+            const isMatch = userStack.length === target.length && userStack.every((v, i) => v === target[i]);
+            
+            if (isMatch) {
+                isDoorUnlocked = true;
+                const door = document.getElementById('exit-door');
+                door.innerText = "🔑 OPEN";
+                door.style.borderColor = "#2ecc71";
+                document.getElementById('narrative').innerText = `성공! 문에 암호를 입력할 수 있게 되었습니다. 획득한 암호: [ ${rooms[currentRoom].code} ]`;
             }
         }
 
-        function showZoom(text) {
-            const overlay = document.getElementById('zoom-overlay');
-            const zoomText = document.getElementById('zoom-text');
-            zoomText.innerText = text;
-            overlay.style.display = 'flex';
+        function openDoorModal() {
+            if (!isDoorUnlocked) {
+                alert("먼저 퍼즐을 풀어 문을 잠금 해제하십시오!");
+                return;
+            }
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('pw-input').focus();
         }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function tryUnlock() {
+            const input = document.getElementById('pw-input').value;
+            if (input === rooms[currentRoom].code) {
+                alert("문이 열렸습니다! 다음 방으로 이동합니다.");
+                currentRoom++;
+                if (currentRoom < rooms.length) {
+                    closeModal();
+                    document.getElementById('pw-input').value = '';
+                    initRoom();
+                } else {
+                    alert("축하합니다! 유적의 모든 문을 열고 탈출에 성공했습니다!");
+                    location.reload();
+                }
+            } else {
+                alert("암호가 틀렸습니다.");
+            }
+        }
+
+        initRoom();
     </script>
 </body>
 </html>
