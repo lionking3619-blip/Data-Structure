@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Tomb of the Pharaoh - Stack Escape</title>
+    <style>
+        :root {
+            --bg-color: #e0c9a6; /* Sandstone warm */
+            --ui-color: #3e2723; /* Dark bronze/wood */
+            --accent-gold: #ffd700;
+            --accent-blue: #00ced1; /* Turquoise */
+            --text-main: #212121;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif; /* Archaic feel */
+            background-color: #222;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none; /* Prevent text highlighting */
+        }
+
+        h1 { color: var(--accent-gold); text-shadow: 2px 2px 4px #000; margin-bottom: 10px; }
+
+        /* 게임 메인 컨테이너 (참조 URL 구조) */
+        #game-container {
+            display: grid;
+            grid-template-columns: 3fr 1fr; /* 왼쪽: 화면, 오른쪽: 인벤토리 */
+            width: 900px;
+            height: 550px;
+            background: var(--bg-color);
+            border: 8px solid var(--ui-color);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+        }
+
+        /* --- 왼쪽: 장면 디스플레이 --- */
+        #scene-display {
+            position: relative;
+            background: #f5eadd; /* Lighter sandstone */
+            border-right: 4px solid var(--ui-color);
+        }
+
+        /* 장면 뷰 포트 (4방향) */
+        #view-port {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .scene-quadrant {
+            min-width: 100%;
+            height: 100%;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* 각 방위별 컨셉 배경 (코드 내 CSS 그라디언트로 대체) */
+        /* WEST: Entrance (Image_1.png 문) */
+        #scene-west { background: radial-gradient(circle at center, #8d6e63 0%, #3e2723 100%); }
+        /* NORTH: Offering (Image_0.png 상단 우측) */
+        #scene-north { background: radial-gradient(circle at center, #a1887f 0%, #5d4037 100%); }
+        /* EAST: Deities (Anubis & Canopic Jars) */
+        #scene-east { background: radial-gradient(circle at center, #bcaaa4 0%, #6d4c41 100%); }
+        /* SOUTH: Puzzle Wall (Colored Scarabs) */
+        #scene-south { background: radial-gradient(circle at center, #d7ccc8 0%, #8d6e63 100%); }
+
+        /* --- 클릭 가능한 핫스팟 (Hotspots) --- */
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            /* border: 1px dashed red; DEBUG ONLY */
+            transition: opacity 0.2s;
+        }
+        .hotspot:hover { opacity: 0.7; outline: 2px solid var(--accent-gold); }
+
+        /* WEST hotspots */
+        #hotspot-door { width: 120px; height: 220px; top: 150px; left: 270px; background: rgba(0,0,0,0.2); border: 4px solid #3e2723;}
+        
+        /* NORTH hotspots */
+        #hotspot-table { width: 180px; height: 80px; bottom: 80px; left: 240px; background: rgba(139,69,19,0.5); }
+
+        /* SOUTH hotspots */
+        #hotspot-box { width: 80px; height: 60px; bottom: 120px; left: 290px; background: rgba(255,215,0,0.4); border: 2px solid var(--accent-gold); }
+
+        /* 색상 스카라베 퍼즐 조각 (SOUTH) */
+        .scarab-puzzle { width: 40px; height: 50px; border-radius: 10px; cursor: pointer; border: 2px solid black; transition: transform 0.1s; }
+        .scarab-puzzle:active { transform: scale(1.1); }
+        #scarab-1 { top: 150px; left: 150px; background: crimson; }
+        #scarab-2 { top: 150px; left: 220px; background: deepskyblue; }
+        #scarab-3 { top: 150px; left: 290px; background: limegreen; }
+        #scarab-4 { top: 150px; left: 360px; background: gold; }
+
+        /* --- 네비게이션 화살표 (참조 URL 디자인) --- */
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 80px;
+            background: rgba(62, 39, 35, 0.7);
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 10;
+        }
+        .nav-arrow:hover { background: rgba(62, 39, 35, 1); }
+        #nav-left { left: 10px; }
+        #nav-right { right: 10px; }
+
+        /* --- 오른쪽: 인벤토리 및 상태창 --- */
+        #sidebar {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            background: var(--ui-color);
+            color: var(--bg-color);
+        }
+
+        #inventory-title {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--accent-gold);
+            padding-bottom: 5px;
+        }
+
+        /* 스택 시각화 */
+        #inventory-stack {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column-reverse; /* 아래서부터 쌓임 */
+            align-items: center;
+            gap: 10px;
+            border: 2px solid var(--bg-color);
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .inventory-item {
+            width: 90%;
+            padding: 12px;
+            background: var(--accent-blue);
+            color: var(--ui-color);
+            text-align: center;
+            font-weight: bold;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .inventory-item.selected { border-color: white; box-shadow: 0 0 10px white; }
+        .inventory-item.top-item { background: var(--accent-gold); border: 2px solid white; animation: pulse 1.5s infinite; }
+
+        /* 버리기/사용 버튼 (POP) */
+        #pop-btn {
+            margin-top: 15px;
+            padding: 10px;
+            background: crimson;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        #pop-btn:hover { background: darkred; }
+
+        /* --- 하단: 설명창 --- */
+        #description-box {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #ddd;
+            padding: 15px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            z-index: 5;
+            overflow-y: auto;
+            border-top: 2px solid var(--accent-gold);
+        }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<h1>Tomb of the Pharaoh</h1>
+
+<div id="game-container">
+    <div id="scene-display">
+        <div id="nav-left" class="nav-arrow" onclick="rotateScene(-1)">&#10216;</div>
+        <div id="nav-right" class="nav-arrow" onclick="rotateScene(1)">&#10217;</div>
+
+        <div id="view-port">
+            <div id="scene-west" class="scene-quadrant">
+                <div style="position:absolute; top:30px; left:30px; color:var(--accent-gold);">[WEST]</div>
+                <div id="hotspot-door" class="hotspot" onclick="interactWithDoor()"></div>
+            </div>
+            <div id="scene-north" class="scene-quadrant">
+                <div style="position:absolute; top:30px; left:30px; color:var(--accent-gold);">[NORTH]</div>
+                <div id="hotspot-table" class="hotspot" onclick="interactWithTable()"></div>
+            </div>
+            <div id="scene-east" class="scene-quadrant">
+                <div style="position:absolute; top:30px; left:30px; color:var(--accent-gold);">[EAST]</div>
+                <div style="position:absolute; top:150px; left:100px; color:#aaa; font-size:4rem;">⚖️</div> </div>
+            <div id="scene-south" class="scene-quadrant">
+                <div style="position:absolute; top:30px; left:30px; color:var(--accent-gold);">
