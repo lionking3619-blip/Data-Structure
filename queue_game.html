@@ -2,125 +2,97 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>119 파이어 택틱스 - 비주얼 에디션</title>
+    <title>119 파이어 택틱스 - 스트룹 함정 에디션</title>
     <style>
         :root { 
-            --fire-color: rgba(214, 48, 49, 0.7); /* 일반: 빨강 */
-            --foam-color: rgba(225, 112, 85, 0.7); /* 유류: 주황 */
-            --co2-color: rgba(108, 92, 231, 0.7);  /* 전기: 보라 */
-            --front-glow: #fff;
+            --fire-color: rgba(214, 48, 49, 0.75); /* 빨강 */
+            --foam-color: rgba(225, 112, 85, 0.75); /* 주황 */
+            --co2-color: rgba(108, 92, 231, 0.75);  /* 보라 */
         }
         body { background: #121212; color: #fff; font-family: 'Malgun Gothic', sans-serif; margin: 0; overflow: hidden; }
         
-        /* 전체 화면 레이아웃 */
+        /* 화면 레이아웃 */
         .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: 0.5s; }
-        #screen-start { background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1516533075015-a3838414c3ca?auto=format&fit=crop&w=1000&q=80'); background-size: cover; }
-        #screen-game { background: #1e1e1e; display: none; } /* 게임 화면은 처음에 숨김 */
-        #screen-gameover { background: rgba(214, 48, 49, 0.9); display: none; z-index: 200; }
+        #screen-start { background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://picsum.photos/id/440/1000/800'); background-size: cover; }
+        #screen-game { background: #1e1e1e; display: none; }
+        #screen-gameover { background: rgba(214, 48, 49, 0.95); display: none; z-index: 200; }
 
-        /* 시작화면 스타일 */
-        h1 { font-size: 60px; text-shadow: 0 0 20px #ff7675; margin-bottom: 10px; }
-        .desc { font-size: 18px; color: #ccc; margin-bottom: 30px; text-align: center; line-height: 1.6; }
-        .btn-main { padding: 20px 60px; font-size: 28px; font-weight: bold; cursor: pointer; border: none; border-radius: 50px; background: #d63031; color: white; transition: 0.3s; }
-        .btn-main:hover { transform: scale(1.1); box-shadow: 0 0 30px #d63031; }
-
-        /* 게임오버 스타일 */
-        #screen-gameover h2 { font-size: 80px; margin: 0; animation: shake 0.5s infinite; }
-        #final-score { font-size: 30px; margin: 20px 0; }
+        h1 { font-size: 60px; text-shadow: 0 0 20px #ff7675; margin: 0; }
+        .desc { font-size: 18px; color: #ffadad; margin: 20px 0 40px; text-align: center; line-height: 1.6; font-weight: bold; }
+        .btn-main { padding: 20px 60px; font-size: 28px; font-weight: bold; cursor: pointer; border: none; border-radius: 50px; background: #d63031; color: white; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .btn-main:hover { transform: scale(1.1); background: #ff7675; }
 
         /* 게임 플레이 영역 */
-        #queue-container { width: 700px; height: 140px; border: 4px solid #444; display: flex; align-items: center; padding: 10px; gap: 15px; background: #000; border-radius: 15px; margin: 20px 0; overflow-x: auto; flex-shrink: 0; }
+        #queue-container { width: 750px; height: 160px; border: 4px solid #444; display: flex; align-items: center; padding: 10px; gap: 15px; background: #000; border-radius: 20px; margin: 20px 0; overflow: hidden; }
         
-        /* 화재 사각형: 크기 유지 (110x110) */
         .incident { 
-            width: 110px; height: 110px; border-radius: 10px; 
+            width: 120px; height: 120px; border-radius: 12px; 
             display: flex; flex-direction: column; position: relative; 
-            font-size: 13px; font-weight: bold; flex-shrink: 0; 
-            overflow: hidden; /* 오버레이와 연소바를 사각형 안에 가둠 */
-            background-size: cover; background-position: center; /* 사진 설정 */
-            border: 2px solid #2d3436;
+            font-size: 14px; font-weight: 900; flex-shrink: 0; 
+            overflow: hidden; background-size: cover; background-position: center;
+            border: 2px solid #333; transition: 0.2s;
         }
         
-        /* 사진 위에 씌우는 색상 오버레이 (종류 구분용) */
-        .incident::after {
-            content: '';
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; /* 사진보다 위에, 연소바보다 아래에 */
-        }
-        
-        /* 큐의 맨 앞 (Front) */
-        .incident.front { 
-            border: 5px solid white; box-shadow: 0 0 30px white; 
-            z-index: 10; transform: scale(1.1); 
-        }
+        .incident::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .incident.front { border: 5px solid #fff; box-shadow: 0 0 30px #fff; z-index: 10; transform: scale(1.1); }
 
-        /* 화재 종류 텍스트 스타일: 사진 위에 가독성 확보 */
         .incident span { 
-            position: absolute; top: 5px; left: 5px; right: 5px;
-            z-index: 2; /* 오버레이보다 위에 */
-            color: #fff; text-shadow: 0 0 10px #000, 0 0 10px #000; /* 검은색 그림자로 가독성 향상 */
-            text-align: center; background: rgba(0,0,0,0.4); padding: 2px; border-radius: 3px;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 2; color: #fff; text-shadow: 2px 2px 4px #000;
+            text-align: center; width: 90%; pointer-events: none;
         }
         
-        /* 연소바: 사진 아래쪽으로 배치 */
-        .burn-bar { 
-            position: absolute; bottom: 0; left: 0; height: 12px; 
-            background: #ff0000; width: 0%; border-radius: 0 0 10px 10px; 
-            z-index: 3; /* 모든 요소보다 위에 */
-        }
+        .burn-bar { position: absolute; bottom: 0; left: 0; height: 14px; background: #ff0000; width: 0%; z-index: 3; }
 
-        /* 각 화재 종류별 사진 및 오버레이 설정 */
-        .type-W { background-image: url('https://images.unsplash.com/photo-1549419137-b184136932a3?auto=format&fit=crop&w=300&q=80'); } /* 주택 화재 */
+        /* 화재 타입 비주얼 (고정된 색상) */
+        .type-W { background-image: url('https://picsum.photos/id/440/200/200'); } /* 일반용 - 빨강 */
         .type-W::after { background-color: var(--fire-color); }
-
-        .type-F { background-image: url('https://images.unsplash.com/photo-1596773177197-e85d43e26210?auto=format&fit=crop&w=300&q=80'); } /* 자동차 화재 (유류) */
+        .type-F { background-image: url('https://picsum.photos/id/1071/200/200'); } /* 유류용 - 주황 */
         .type-F::after { background-color: var(--foam-color); }
-
-        .type-C { background-image: url('https://images.unsplash.com/photo-1611095973763-41401957268c?auto=format&fit=crop&w=300&q=80'); } /* 전선 스파크 (전기) */
+        .type-C { background-image: url('https://picsum.photos/id/1081/200/200'); } /* 전기용 - 보라 */
         .type-C::after { background-color: var(--co2-color); }
 
-        .equip-group { display: flex; gap: 10px; margin-top: 20px; }
-        .equip-btn { padding: 15px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 8px; opacity: 0.4; transition: 0.2s; }
-        .equip-btn.active { opacity: 1; transform: translateY(-5px); border: 2px solid white; box-shadow: 0 5px 15px rgba(255,255,255,0.3); }
-        #btn-W { background: rgba(9, 132, 227, 0.9); color: white; }
-        #btn-F { background: rgba(225, 112, 85, 0.9); color: white; }
-        #btn-C { background: rgba(108, 92, 231, 0.9); color: white; }
+        .equip-group { display: flex; gap: 15px; margin-top: 20px; }
+        .equip-btn { padding: 18px 25px; font-size: 18px; cursor: pointer; border: none; border-radius: 10px; opacity: 0.3; transition: 0.2s; font-weight: bold; color: white; }
+        .equip-btn.active { opacity: 1; transform: translateY(-8px); border: 3px solid white; box-shadow: 0 5px 20px rgba(255,255,255,0.4); }
+        
+        #btn-W { background: #0984e3; } /* 물 */
+        #btn-F { background: #e17055; } /* 포소화 */
+        #btn-C { background: #6c5ce7; } /* CO2 */
 
-        #dispatch-btn { margin-top: 30px; padding: 25px 150px; font-size: 28px; background: #d63031; color: white; border: none; border-radius: 10px; cursor: pointer; }
-
-        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-3px, -2px); } 100% { transform: translate(1px, 1px); } }
+        #dispatch-btn { margin-top: 35px; padding: 25px 160px; font-size: 30px; font-weight: bold; background: #d63031; color: white; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 8px 0 #861e1e; }
+        #dispatch-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 #861e1e; }
     </style>
 </head>
 <body>
 
     <div id="screen-start" class="screen">
         <h1>119 FIRE TACTICS</h1>
-        <p class="desc">큐(Queue)를 이용해 화재 대기열을 관리하세요!<br>화재 종류에 맞는 장비를 골라 순서대로 진압해야 합니다.<br>몰려드는 화재 속에서 도시를 보호하십시오!</p>
+        <p class="desc">⚠️ 긴급 경보: 인지 혼동 주의!<br>글자에 속지 마십시오. 오직 <span style="color:#ff7675">불의 색깔</span>에 맞는 장비를 써야 합니다.<br>(빨강: 물 / 주황: 포소화 / 보라: CO2)</p>
         <button class="btn-main" onclick="startGame()">현장으로 출동</button>
     </div>
 
     <div id="screen-game" class="screen">
-        <div style="display:flex; gap: 40px; font-size: 24px; font-weight: bold;">
-            <div>점수: <span id="score">0</span></div>
-            <div>내구도(HP): <span id="hp">3</span></div>
+        <div style="display:flex; gap: 60px; font-size: 26px; font-weight: 900; margin-bottom: 20px;">
+            <div>SCORE: <span id="score">0</span></div>
+            <div>HP: <span id="hp">3</span></div>
         </div>
         
-        <div id="queue-container">
-            </div>
+        <div id="queue-container"></div>
 
         <div class="equip-group">
-            <button id="btn-W" class="equip-btn active" onclick="setEquip('W')">물 [일반]</button>
-            <button id="btn-F" class="equip-btn" onclick="setEquip('F')">포소화 [유류]</button>
-            <button id="btn-C" class="equip-btn" onclick="setEquip('C')">CO2 [전기]</button>
+            <button id="btn-W" class="equip-btn active" onclick="setEquip('W')">💧 물 [빨강불]</button>
+            <button id="btn-F" class="equip-btn" onclick="setEquip('F')">🧪 포소화 [주황불]</button>
+            <button id="btn-C" class="equip-btn" onclick="setEquip('C')">☁️ CO2 [보라불]</button>
         </div>
         
-        <button id="dispatch-btn" onclick="dispatch()">🔥 진압 (SHIFT)</button>
+        <button id="dispatch-btn" onclick="dispatch()">🚒 진압 시도 (SHIFT)</button>
     </div>
 
     <div id="screen-gameover" class="screen">
-        <h2>MISSION FAILED</h2>
-        <div id="final-score">최종 진압 점수: 0</div>
-        <button class="btn-main" onclick="backToStart()">본부로 복귀</button>
+        <h2 style="font-size: 70px;">MISSION FAILED</h2>
+        <div id="final-score" style="font-size: 32px; margin: 20px 0 40px;">최종 진압 점수: 0</div>
+        <button class="btn-main" onclick="backToStart()">본부 복귀 및 재정비</button>
     </div>
 
     <script>
@@ -131,39 +103,30 @@
         let gameInterval, spawnTimeout;
         let isPlaying = false;
 
-        const types = [
-            {id: 'W', name: '일반 화재', cssClass: 'type-W'},
-            {id: 'F', name: '유류 화재', cssClass: 'type-F'},
-            {id: 'C', name: '전기 화재', cssClass: 'type-C'}
+        // 실제 진압에 필요한 데이터 (ID와 비주얼 클래스)
+        const fireTypes = [
+            {id: 'W', realName: '일반 화재', cssClass: 'type-W'}, // 빨강
+            {id: 'F', realName: '유류 화재', cssClass: 'type-F'}, // 주황
+            {id: 'C', realName: '전기 화재', cssClass: 'type-C'}  // 보라
         ];
 
-        // 화면 전환 함수
+        // 화면에 무작위로 표시될 텍스트들
+        const fakeNames = ["일반 화재", "유류 화재", "전기 화재", "가스 폭발", "산불 발생", "화학 사고"];
+
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
             document.getElementById(id).style.display = 'flex';
         }
 
-        // 게임 시작
         function startGame() {
-            // 초기화
-            queue = [];
-            score = 0;
-            hp = 3;
-            isPlaying = true;
-            setEquip('W');
-            updateUI();
-            
+            queue = []; score = 0; hp = 3; isPlaying = true;
+            setEquip('W'); updateUI();
             showScreen('screen-game');
-            
-            // 루프 시작
             gameInterval = setInterval(gameLogic, 100);
             spawnLoop();
         }
 
-        // 본부 복귀 (시작화면으로)
-        function backToStart() {
-            showScreen('screen-start');
-        }
+        function backToStart() { showScreen('screen-start'); }
 
         function setEquip(type) {
             currentEquip = type;
@@ -173,16 +136,29 @@
 
         function spawnFire() {
             if (!isPlaying) return;
-            const typeInfo = types[Math.floor(Math.random() * types.length)];
-            queue.push({ ...typeInfo, burn: 0 });
+            
+            // 1. 실제 정답(색상/ID) 결정
+            const realType = fireTypes[Math.floor(Math.random() * fireTypes.length)];
+            
+            // 2. 표시될 이름 결정 (함정 로직: 50% 확률로 가짜 이름 부여)
+            let displayName = realType.realName;
+            if (Math.random() < 0.5) {
+                displayName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+            }
+
+            queue.push({ 
+                id: realType.id, 
+                cssClass: realType.cssClass, 
+                displayText: displayName,
+                burn: 0 
+            });
             updateUI();
         }
 
         function spawnLoop() {
             if (!isPlaying) return;
             spawnFire();
-            // 점수가 높을수록 더 빨리 불이 남
-            let delay = Math.max(800, 3500 - (score / 15));
+            let delay = Math.max(700, 3200 - (score / 12));
             spawnTimeout = setTimeout(spawnLoop, delay);
         }
 
@@ -190,13 +166,14 @@
             if (!isPlaying || queue.length === 0) return;
 
             const target = queue[0];
+            // 중요: 글자가 아니라 target.id(색상 기반 ID)와 현재 장비를 비교함
             if (target.id === currentEquip) {
-                queue.shift(); // 큐에서 제거
+                queue.shift();
                 score += 100;
                 updateUI();
             } else {
-                // 장비 틀리면 불이 더 빨리 탐
-                queue[0].burn += 15;
+                // 틀리면 즉시 패널티 (연소도 급증)
+                queue[0].burn += 25;
                 updateUI();
             }
         }
@@ -205,7 +182,7 @@
             if (!isPlaying) return;
 
             queue.forEach((f, i) => {
-                f.burn += (i === 0 ? 1.8 : 0.6); // 맨 앞이 더 빨리 탐
+                f.burn += (i === 0 ? 1.8 : 0.6);
                 if (f.burn >= 100) {
                     queue.shift();
                     hp--;
@@ -224,7 +201,8 @@
             queue.forEach((f, i) => {
                 const div = document.createElement('div');
                 div.className = `incident ${f.cssClass}` + (i === 0 ? ' front' : '');
-                div.innerHTML = `<span>${f.name}</span><div class="burn-bar" style="width:${f.burn}%"></div>`;
+                // f.displayText를 사용하여 함정 텍스트 노출
+                div.innerHTML = `<span>${f.displayText}</span><div class="burn-bar" style="width:${f.burn}%"></div>`;
                 container.appendChild(div);
             });
         }
@@ -233,7 +211,6 @@
             isPlaying = false;
             clearInterval(gameInterval);
             clearTimeout(spawnTimeout);
-            
             document.getElementById('final-score').innerText = `최종 진압 점수: ${score}`;
             showScreen('screen-gameover');
         }
