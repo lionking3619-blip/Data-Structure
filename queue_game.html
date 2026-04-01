@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>119 파이어 택틱스: 멀티 매칭</title>
+    <style>
+        :root { --A: #ff7675; --B: #fdcb6e; --C: #a29bfe; }
+        body { background: #121212; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        #game-info { display: flex; gap: 50px; margin: 20px; font-size: 20px; font-weight: bold; }
+        
+        /* 큐 시각화 */
+        #queue-container { width: 600px; height: 120px; border: 3px solid #444; display: flex; align-items: center; padding: 10px; gap: 10px; overflow: hidden; background: #000; border-radius: 10px; }
+        .incident { width: 100px; height: 100px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 12px; }
+        .incident.front { border: 4px solid #fff; box-shadow: 0 0 15px #fff; z-index: 10; }
+        .burn-bar { position: absolute; bottom: 0; left: 0; height: 10px; background: red; width: 0%; border-radius: 0 0 8px 8px; }
+        
+        /* 장비 선택 섹션 */
+        #controls { margin-top: 30px; text-align: center; }
+        .equip-btn { padding: 15px 25px; margin: 5px; font-size: 18px; cursor: pointer; border: none; border-radius: 5px; opacity: 0.6; transition: 0.3s; }
+        .equip-btn.active { opacity: 1; transform: scale(1.1); font-weight: bold; border: 2px solid white; }
+        #btn-W { background: #0984e3; color: white; }
+        #btn-F { background: #e17055; color: white; }
+        #btn-C { background: #6c5ce7; color: white; }
+        
+        #dispatch-btn { margin-top: 20px; padding: 20px 100px; font-size: 24px; background: #d63031; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #dispatch-btn:hover { background: #ff7675; }
+    </style>
+</head>
+<body>
+
+    <h1>🚨 119 파이어 택틱스</h1>
+    <div id="game-info">
+        <div>SCORE: <span id="score">0</span></div>
+        <div>HP: <span id="hp">3</span></div>
+    </div>
+
+    <div id="queue-container">
+        </div>
+
+    <div id="controls">
+        <p>현재 장비 선택:</p>
+        <button id="btn-W" class="equip-btn active" onclick="setEquip('W')">물 (일반용)</button>
+        <button id="btn-F" class="equip-btn" onclick="setEquip('F')">포소화약제 (유류용)</button>
+        <button id="btn-C" class="equip-btn" onclick="setEquip('C')">CO2 (전기용)</button>
+        <br>
+        <button id="dispatch-btn" onclick="dispatch()">🔥 진압 시도 (SHIFT)</button>
+    </div>
+
+    <script>
+        let queue = [];
+        let score = 0;
+        let hp = 3;
+        let currentEquip = 'W';
+        const types = [
+            {id: 'W', name: '일반 화재', color: '#ff7675'},
+            {id: 'F', name: '유류 화재', color: '#fdcb6e'},
+            {id: 'C', name: '전기 화재', color: '#a29bfe'}
+        ];
+
+        function setEquip(type) {
+            currentEquip = type;
+            document.querySelectorAll('.equip-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + type).classList.add('active');
+        }
+
+        // 큐에 새로운 화재 추가 (Enqueue)
+        function spawnFire() {
+            if (hp <= 0) return;
+            const typeInfo = types[Math.floor(Math.random() * types.length)];
+            queue.push({ ...typeInfo, burn: 0 });
+            updateUI();
+        }
+
+        // 진압 시도 (Dequeue)
+        function dispatch() {
+            if (queue.length === 0) return;
+
+            const target = queue[0]; // 큐의 맨 앞 확인 (Peek)
+            if (target.id === currentEquip) {
+                queue.shift(); // 장비가 맞으면 제거 (Dequeue)
+                score += 100;
+                updateUI();
+            } else {
+                alert("장비가 맞지 않습니다! 장비를 교체하세요.");
+            }
+        }
+
+        function updateUI() {
+            const container = document.getElementById('queue-container');
+            container.innerHTML = '';
+            document.getElementById('score').innerText = score;
+            document.getElementById('hp').innerText = hp;
+
+            queue.forEach((f, i) => {
+                const div = document.createElement('div');
+                div.className = 'incident' + (i === 0 ? ' front' : '');
+                div.style.background = f.color;
+                div.innerHTML = `<b>${f.name}</b><div class="burn-bar" style="width:${f.burn}%"></div>`;
+                container.appendChild(div);
+            });
+        }
+
+        // 연소도 증가 시뮬레이션
+        setInterval(() => {
+            if (hp <= 0) return;
+            queue.forEach((f, i) => {
+                f.burn += (i === 0 ? 5 : 2); // 맨 앞 화재는 더 빨리 탐
+                if (f.burn >= 100) {
+                    queue.shift();
+                    hp--;
+                    updateUI();
+                    if (hp <= 0) alert("도시가 전소되었습니다. 게임 오버!");
+                }
+            });
+            updateUI();
+        }, 500);
+
+        // 2~4초마다 랜덤하게 화재 발생
+        function loop() {
+            spawnFire();
+            setTimeout(loop, 2000 + Math.random() * 2000);
+        }
+        loop();
+    </script>
+</body>
+</html>
