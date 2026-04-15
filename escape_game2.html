@@ -2,79 +2,80 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>호서대 탈출 - 클릭 레이어 수정본</title>
+    <title>호서대 캠퍼스 대탈출 - 최종 수정본</title>
     <style>
         :root { --hsu-blue: #004a99; --hsu-gold: #b3995d; }
         body { margin: 0; background: #111; color: white; display: flex; flex-direction: column; align-items: center; }
         
-        /* 지도 컨테이너 */
         #game-container {
             position: relative;
             width: 800px;
             height: 800px;
             margin-top: 30px;
             border: 5px solid #333;
-            /* 배경 이미지를 CSS가 아닌 inline에서 불러올 수도 있지만 여기서 처리 */
             background-image: url('https://mblogthumb-phinf.pstatic.net/MjAyMTExMDNfMTQ1/MDAxNjM1OTI1ODE5NjQ4.G4HmawqKX2S-CNlgjEhjdTT-gaLQESi4iEpeaOaBlK8g.2mCS0Pc-TZkhZS3RwR7ifq31Fy1MFPWllTko-YtjAmQg.PNG.hoseo4989/KakaoTalk_20211103_164107838_01.png?type=w800');
             background-size: 100% 100%;
         }
 
-        /* 핫스팟: 최상단 레이어로 강제 배치 */
+        /* 핫스팟: 평소에는 투명, 마우스 올리면(Hover) 노란 테두리 등장 */
         .hotspot {
             position: absolute;
             cursor: pointer;
-            border: 3px solid #ff0000; /* 클릭 가능 영역 확인용 빨간 테두리 */
-            background: rgba(255, 0, 0, 0.2);
-            z-index: 9999; /* 다른 어떤 요소보다 위에 있도록 설정 */
-            display: block !important;
+            border: 2px solid transparent; 
+            background: rgba(255, 255, 255, 0);
+            z-index: 999;
+            transition: all 0.2s ease;
         }
 
         .hotspot:hover {
-            background: rgba(255, 255, 0, 0.4);
-            border-color: #ffff00;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid var(--hsu-gold);
+            box-shadow: 0 0 15px var(--hsu-gold);
         }
 
         .cleared {
-            background: rgba(0, 255, 0, 0.5) !important;
-            border-color: #00ff00 !important;
+            background: rgba(0, 255, 0, 0.2) !important;
+            border: 2px solid #00ff00 !important;
+            pointer-events: none;
         }
 
-        /* 좌표 (지도 이미지 상의 숫자 위치에 맞춰 미세 조정) */
-        #h1 { top: 61%; left: 59%; width: 60px; height: 60px; } /* 대학본부 */
-        #h2 { top: 67%; left: 16%; width: 70px; height: 70px; } /* 학술정보관 */
-        #h3 { top: 43%; left: 57%; width: 60px; height: 60px; } /* 제1공학관 */
-        #h4 { top: 47%; left: 11%; width: 60px; height: 45px; } /* 산학협동1 */
-        #h5 { top: 35%; left: 11%; width: 60px; height: 45px; } /* 산학협동2 */
-        #h6 { top: 29%; left: 68%; width: 100px; height: 45px; } /* 제2공학관 */
-        #h7 { top: 12%; left: 10%; width: 60px; height: 60px; } /* 예술관 */
-        #h8 { top: 16%; left: 28%; width: 280px; height: 100px; } /* 강석규관 */
-        #h9 { top: 7%; left: 34%; width: 150px; height: 50px; } /* 조형관 */
-        #h10 { top: 21%; left: 81%; width: 100px; height: 50px; } /* 자연관 */
-        #h11 { top: 57%; left: 83%; width: 100px; height: 50px; } /* 체육관 */
+        /* [좌표 수정] 1번 건물을 숫자 위가 아닌 실제 건물 몸체로 이동 */
+        #h1 { top: 70%; left: 59%; width: 140px; height: 80px; } /* 대학본부(중앙 하단 대형 건물) */
+        
+        /* 나머지 건물들 유지 및 미세조정 */
+        #h2 { top: 68%; left: 10%; width: 120px; height: 120px; } /* 학술정보관 */
+        #h3 { top: 43%; left: 57%; width: 140px; height: 100px; } /* 제1공학관 */
+        #h4 { top: 47%; left: 6%; width: 110px; height: 70px; }  /* 산학협동1 */
+        #h5 { top: 33%; left: 6%; width: 110px; height: 70px; }  /* 산학협동2 */
+        #h6 { top: 28%; left: 67%; width: 140px; height: 70px; } /* 제2공학관 */
+        #h7 { top: 11%; left: 7%; width: 100px; height: 100px; } /* 예술관 */
+        #h8 { top: 14%; left: 23%; width: 360px; height: 130px; } /* 강석규관 */
+        #h9 { top: 5%; left: 29%; width: 240px; height: 80px; }   /* 조형관 */
+        #h10 { top: 20%; left: 80%; width: 150px; height: 80px; } /* 자연관 */
+        #h11 { top: 56%; left: 81%; width: 150px; height: 80px; } /* 체육관 */
 
-        /* 문제 창 */
+        /* 문제 창 스타일 */
         #modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: none; z-index: 10000;
+            background: rgba(0,0,0,0.9); display: none; z-index: 9999;
             justify-content: center; align-items: center;
         }
         #modal-content {
             background: #222; padding: 40px; border: 3px solid var(--hsu-blue);
-            border-radius: 20px; text-align: center; width: 450px;
+            border-radius: 20px; text-align: center; width: 400px;
         }
-        input { width: 80%; padding: 15px; font-size: 20px; margin: 20px 0; background: #000; color: #fff; border: 1px solid var(--hsu-gold); }
-        button { padding: 10px 30px; font-size: 18px; cursor: pointer; background: var(--hsu-blue); color: #fff; border: none; font-weight: bold; }
+        input { width: 80%; padding: 12px; font-size: 18px; margin: 20px 0; background: #000; color: #fff; border: 1px solid var(--hsu-gold); text-align: center; }
+        button { padding: 10px 25px; font-size: 16px; cursor: pointer; background: var(--hsu-blue); color: #fff; border: none; font-weight: bold; margin: 5px; }
 
-        /* 인벤토리 */
-        #inv-box { display: flex; margin-top: 20px; gap: 10px; }
-        .slot { width: 45px; height: 45px; border: 2px solid #555; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .on { background: var(--hsu-gold); color: #000; border-color: #fff; }
+        #inv-box { display: flex; margin: 20px; gap: 8px; }
+        .slot { width: 40px; height: 40px; border: 1px solid #444; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        .on { background: var(--hsu-gold); color: #000; border: 1px solid #fff; }
     </style>
 </head>
 <body>
 
-    <h2 style="margin-top:20px; color:var(--hsu-gold);">호서대 캠퍼스 대탈출 (클릭 보강판)</h2>
-    <p>지도 위의 <b>빨간 테두리 영역</b>을 클릭하세요.</p>
+    <h2 style="margin-top:20px; color:var(--hsu-gold);">호서대 캠퍼스 대탈출</h2>
+    <p>마우스를 올리면 나타나는 <b>노란 영역</b>을 클릭하여 조각을 모으세요.</p>
 
     <div id="game-container">
         <div class="hotspot" id="h1" onclick="openQ(1)"></div>
@@ -100,11 +101,11 @@
     <div id="modal">
         <div id="modal-content">
             <h2 id="m-title" style="color:var(--hsu-gold)"></h2>
-            <p id="m-ques" style="font-size: 1.1em; line-height: 1.5;"></p>
-            <input type="text" id="m-ans" placeholder="정답을 입력하세요">
+            <p id="m-ques"></p>
+            <input type="text" id="m-ans" placeholder="정답 입력">
             <br>
             <button onclick="check()">제출</button>
-            <button style="background:#555" onclick="document.getElementById('modal').style.display='none'">닫기</button>
+            <button style="background:#444" onclick="document.getElementById('modal').style.display='none'">닫기</button>
         </div>
     </div>
 
@@ -113,45 +114,40 @@
     let solved = [];
 
     const questData = {
-        1: {t: "대학본부", q: "교훈의 마지막 구절은?<br>'할 수 있다, 하면 된다, OOO'", a: "하자"},
-        2: {t: "학술정보관", q: "도서관 건물은 어떤 학용품의 형태인가요? (두 글자)", a: "책"},
-        3: {t: "제1공학관", q: "이 건물 번호는 지도에서 몇 번입니까?", a: "3"},
-        4: {t: "산학협동1호관", q: "상징 슬로건: Venture OOO (영어)", a: "1st"},
-        5: {t: "산학협동2호관", q: "지하 1층 대형 회의실의 이름은? (OOO션)", a: "컨벤션"},
-        6: {t: "제2공학관", q: "위에서 본 건물의 모양은 어떤 알파벳?", a: "H"},
-        7: {t: "예술관", q: "설립자 초상화를 그린 화가의 이름은? (세 글자)", a: "김영수"},
-        8: {t: "강석규교육관", q: "이 건물은 개교 몇 주년 기념 건물입니까?", a: "30"},
-        9: {t: "조형과학관", q: "건물 내 원형 공연장의 이름은? (OOO)", a: "아우룸"},
-        10: {t: "자연과학관", q: "생명의 기본 단위인 이것은?", a: "세포"},
-        11: {t: "체육관", q: "이 체육관이 개관한 연도는? (4자리 숫자)", a: "2012"}
+        1: {t: "대학본부", q: "교훈: 할 수 있다, 하면 된다, OOO", a: "하자"},
+        2: {t: "학술정보관", q: "도서관 건물 모양의 모티브가 된 학용품은?", a: "책"},
+        3: {t: "제1공학관", q: "이 건물의 번호는?", a: "3"},
+        4: {t: "산학협동1호관", q: "Venture OOO", a: "1st"},
+        5: {t: "산학협동2호관", q: "대형 회의실 이름: OOO션홀", a: "컨벤션"},
+        6: {t: "제2공학관", q: "건물을 위에서 본 모양 (알파벳)", a: "H"},
+        7: {t: "예술관", q: "설립자 초상화를 그린 화가 이름은?", a: "김영수"},
+        8: {t: "강석규교육관", q: "개교 몇 주년 기념 건물?", a: "30"},
+        9: {t: "조형과학관", q: "내부 공연장 이름: OOO홀", a: "아우룸"},
+        10: {t: "자연과학관", q: "생명의 기본 단위는?", a: "세포"},
+        11: {t: "체육관", q: "개관 연도? (4자리)", a: "2012"}
     };
 
     function openQ(id) {
-        if(solved.includes(id)) return;
         currentId = id;
         document.getElementById('m-title').innerText = questData[id].t;
-        document.getElementById('m-ques').innerHTML = questData[id].q;
+        document.getElementById('m-ques').innerText = questData[id].q;
         document.getElementById('m-ans').value = "";
         document.getElementById('modal').style.display = 'flex';
-        // 입력창에 자동 포커스
-        setTimeout(()=> document.getElementById('m-ans').focus(), 100);
     }
 
     function check() {
-        const userAns = document.getElementById('m-ans').value.trim();
-        if(userAns === questData[currentId].a) {
-            alert("정답! 종이 조각을 획득했습니다.");
-            solved.push(currentId);
-            document.getElementById('h' + currentId).classList.add('cleared');
-            document.getElementById('s' + currentId).classList.add('on');
-            document.getElementById('modal').style.display = 'none';
-            
-            if(solved.length === 11) {
-                alert("축하합니다! 11개의 조각이 모여 졸업장으로 변했습니다! 탈출 성공!");
-                location.reload();
+        const val = document.getElementById('m-ans').value.trim();
+        if(val === questData[currentId].a) {
+            alert("정답입니다!");
+            if(!solved.includes(currentId)) {
+                solved.push(currentId);
+                document.getElementById('h'+currentId).classList.add('cleared');
+                document.getElementById('s'+currentId).classList.add('on');
             }
+            document.getElementById('modal').style.display = 'none';
+            if(solved.length === 11) alert("모든 조각을 모았습니다! 졸업장 수여를 축하합니다!");
         } else {
-            alert("틀렸습니다. 다시 생각해보세요.");
+            alert("다시 생각해보세요.");
         }
     }
 </script>
