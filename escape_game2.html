@@ -2,31 +2,39 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>호서대 아산캠퍼스 방탈출</title>
+    <title>호서대 아산캠퍼스 대탈출 v2.0</title>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        #game-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 450px; text-align: center; }
-        .location-img { width: 100%; height: 150px; background-color: #e9ecef; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-weight: bold; border: 2px dashed #adb5bd; }
-        h2 { color: #004a99; }
-        p { line-height: 1.6; color: #495057; }
-        input { width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ced4da; border-radius: 5px; }
-        button { padding: 10px 20px; background-color: #004a99; color: white; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #222; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #game-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 600px; text-align: center; overflow: hidden; }
+        #image-area { width: 100%; height: 300px; border-radius: 10px; margin-bottom: 20px; background-size: cover; background-position: center; border: 3px solid #004a99; position: relative; display: flex; align-items: flex-end; justify-content: center;}
+        #image-label { background: rgba(0, 74, 153, 0.8); color: white; padding: 5px 15px; border-radius: 5px 5px 0 0; font-weight: bold; font-size: 1.1em;}
+        h2 { color: #004a99; margin-top: 0; }
+        p { line-height: 1.6; color: #333; margin: 10px 0; }
+        #quiz-area { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        input { width: 70%; padding: 12px; margin: 10px 0; border: 2px solid #ced4da; border-radius: 5px; font-size: 1.1em; text-align: center; }
+        input:focus { border-color: #004a99; outline: none; }
+        button { padding: 12px 24px; background-color: #004a99; color: white; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; font-size: 1.1em; font-weight: bold; }
         button:hover { background-color: #003366; }
-        #message { margin-top: 15px; font-weight: bold; min-height: 20px; }
+        #message { margin-top: 15px; font-weight: bold; min-height: 24px; font-size: 1.1em; }
         .success { color: #28a745; }
         .error { color: #dc3545; }
+        #progress { font-size: 0.9em; color: #666; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
     <div id="game-ui">
-        <div class="location-img" id="loc-display">📍 시작 지점: 정문</div>
-        <h2 id="loc-title">캠퍼스 탈출 시작</h2>
-        <p id="description">호서대학교 아산캠퍼스에 갇혔습니다! <br>지리를 잘 이용하여 다음 장소로 이동하세요.</p>
+        <div id="progress">단계: 1 / 10</div>
+        <div id="image-area">
+            <span id="image-label"></span>
+        </div>
+        <h2 id="loc-title">캠퍼스에 갇히다</h2>
+        <p id="description">눈을 떠보니 호서대학교 정문입니다. 학교가 폐쇄되었습니다! <br>지리를 이용해 10개의 수수께끼를 풀고 탈출하세요.</p>
+        
         <div id="quiz-area">
-            <p id="question"><strong>첫 번째 관문:</strong> 호서대학교의 상징 동물이며 정문에 우뚝 서 있는 이 동물은 무엇일까요?</p>
-            <input type="text" id="answer-input" placeholder="정답 입력">
+            <p id="question"></p>
+            <input type="text" id="answer-input" placeholder="정답 입력 (공백 없이)">
             <br>
             <button onclick="checkAnswer()">확인</button>
         </div>
@@ -37,36 +45,102 @@
 <script>
     let currentStage = 0;
 
+    // 게임 데이터: 10단계 구성
+    // 각 단계의 img는 검색된 실제 이미지 파일을 사용하도록 설정
     const stages = [
         {
-            title: "정문 (Main Gate)",
-            img: "📍 정문",
-            question: "호서대학교의 상징 동물이며 정문에 우뚝 서 있는 이 동물은 무엇일까요?",
+            title: "1단계: 정문 (Main Gate)",
+            img: "image_0.png", // 호서대학교 아산캠퍼스 정문 독수리상
+            imgLabel: "정문 독수리상",
+            question: "이곳 정문에 서 있는 학교의 상징 동물은 무엇인가요?",
             answer: "독수리",
-            desc: "정문을 통과했습니다. 이제 중앙으로 올라가야 합니다."
+            desc: "독수리가 길을 열어주었습니다. 위쪽으로 올라가세요."
         },
         {
-            title: "학술정보관 (도서관)",
-            img: "📚 학술정보관",
-            question: "거대한 도서관 건물을 지났습니다. 이곳의 이름은 'OO정보관'일까요?",
-            answer: "학술",
-            desc: "정답입니다! 공부하는 학생들을 뒤로하고 호수 쪽으로 이동합니다."
+            title: "2단계: 대학교회 (University Church)",
+            img: "image_8.png", // 호서대학교 대학교회
+            imgLabel: "대학교회 전경",
+            question: "기독교 정신으로 설립된 호서대의 상징적 건물입니다. 이 건물의 지붕은 어떤 색인가요? (OO색)",
+            answer: "구리색", // 이미지에 따라 '동색', '청동색' 등으로 수정 가능 (이미지 8은 약간 구리/갈색 톤)
+            desc: "정답입니다. 종소리를 뒤로하고 중앙 광장으로 갑니다."
         },
         {
-            title: "세출호 (Lake)",
-            img: "🌊 세출호",
-            question: "벚꽃 명소로 유명한 캠퍼스 안의 큰 호수 이름은 무엇일까요?",
-            answer: "세출호",
-            desc: "호수 바람이 시원하네요. 이제 마지막 목적지가 보입니다."
+            title: "3단계: 학생회관 (Student Union)",
+            img: "image_10.png", // 호서대학교 학생회관 중앙광장
+            imgLabel: "학생회관 & 광장",
+            question: "학생회관 앞 광장의 바닥 패턴을 보세요. 이 패턴은 어떤 기하학적 도형으로 되어 있나요? (OOO)",
+            answer: "사각형", 
+            desc: "정답입니다. 광장을 지나 도서관 쪽으로 이동합니다."
         },
         {
-            title: "강석규교육관",
-            img: "🏛️ 강석규교육관",
-            question: "호서대학교의 설립자 성함을 딴 이 건물의 이름은? (OOO교육관)",
-            answer: "강석규",
-            desc: "모든 관문을 통과했습니다! 당신은 진정한 호서인입니다."
+            title: "4단계: 학술정보관 (Library)",
+            img: "image_2.png", // 호서대학교 학술정보관
+            imgLabel: "학술정보관 (중앙도서관)",
+            question: "이 거대한 도서관의 정식 명칭은 'OOOOOO'입니다. 빈칸에 들어갈 말은? (띄어쓰기 없이)",
+            answer: "학술정보관",
+            desc: "도서관의 지식을 얻었습니다. 이제 공학관 방향입니다."
+        },
+        {
+            title: "5단계: 제1공학관 (Engineering Hall 1)",
+            img: "image_12.png", // 호서대학교 공학관 전경
+            imgLabel: "제1공학관",
+            question: "공학관 건물 외벽에 가장 많이 사용된 벽돌의 색은 무엇인가요? (OO색)",
+            answer: "빨간색", 
+            desc: "공학적 지식으로 잠금을 해제했습니다. 세출호로 이동합니다."
+        },
+        {
+            title: "6단계: 세출호 (Seechul Lake)",
+            img: "image_4.png", // 호서대학교 세출호 벚꽃
+            imgLabel: "세출호 (호수)",
+            question: "호수 옆 표지판을 보니 이곳의 벚꽃 축제 이름은 'OOOO' 벚꽃축제입니다. 빈칸은? (OO색 꿈)",
+            answer: "하얀꿈", // 검색 제목 참고
+            desc: "호수의 수수께끼를 풀었습니다. 체육관 쪽으로 올라갑니다."
+        },
+        {
+            title: "7단계: 체육관 (Gymnasium)",
+            img: "image_15.png", // 호서대학교 체육관 및 운동장 (Gym)
+            imgLabel: "체육관 내부",
+            question: "체육관 바닥에 그려진 가장 큰 원은 어떤 종목을 위한 것인가요? (OO)",
+            answer: "농구",
+            desc: "건강한 신체에 건강한 정신이 깃듭니다. 산학협력관으로 갑니다."
+        },
+        {
+            title: "8단계: 벤처산학협력관",
+            img: "image_16.png", // 호서대학교 벤처산학협력관
+            imgLabel: "벤처산학협력관",
+            question: "호서대의 슬로건인 'Venture 1st'가 가장 잘 어울리는 건물입니다. 이 건물 정면에 보이는 숫자 '1' 모양의 구조물 색은? (OO색)",
+            answer: "파란색",
+            desc: "벤처 정신으로 암호를 풀었습니다. 이제 생활관을 지나야 합니다."
+        },
+        {
+            title: "9단계: 생활관 (Dormitory)",
+            img: "image_18.png", // 호서대학교 생활관 Dormitory (room)
+            imgLabel: "생활관 내부 (2인실)",
+            question: "생활관 내부 사진입니다. 2인실 구조인 이 방에 배치된 침대의 총 개수는 몇 개입니까? (숫자로만)",
+            answer: "2",
+            desc: "마지막 목적지가 보입니다. 설립자의 정신이 깃든 곳입니다."
+        },
+        {
+            title: "10단계: 강석규교육관 (Final)",
+            img: "image_6.png", // 호서대학교 강석규교육관
+            imgLabel: "강석규교육관",
+            question: "호서대학교 설립자이신 '강석규' 박사님의 성함을 딴 이 건물의 정식 명칭은 OOOOOO입니다. 빈칸은? (띄어쓰기 없이)",
+            answer: "강석규교육관",
+            desc: "축하합니다! 설립자의 지혜를 얻어 정문 빗장이 풀렸습니다."
         }
     ];
+
+    function updateUI() {
+        const stage = stages[currentStage];
+        document.getElementById('progress').innerText = `단계: ${currentStage + 1} / ${stages.length}`;
+        document.getElementById('image-area').style.backgroundImage = `url(${stage.img})`;
+        document.getElementById('image-label').innerText = stage.imgLabel;
+        document.getElementById('loc-title').innerText = stage.title;
+        document.getElementById('description').innerHTML = stage.desc;
+        document.getElementById('question').innerText = stage.question;
+        document.getElementById('answer-input').value = "";
+        document.getElementById('message').innerText = "";
+    }
 
     function checkAnswer() {
         const input = document.getElementById('answer-input').value.trim();
@@ -74,7 +148,7 @@
 
         if (input === stages[currentStage].answer) {
             msg.className = "success";
-            msg.innerText = "정답입니다! 이동합니다...";
+            msg.innerText = "✅ 정답입니다! 다음 단계로 이동합니다.";
             
             setTimeout(() => {
                 currentStage++;
@@ -83,29 +157,27 @@
                 } else {
                     showEnding();
                 }
-            }, 1000);
+            }, 1200);
         } else {
             msg.className = "error";
-            msg.innerText = "틀렸습니다. 다시 생각해보세요!";
+            msg.innerText = "❌ 틀렸습니다. 사진과 힌트를 다시 잘 보세요!";
         }
-    }
-
-    function updateUI() {
-        document.getElementById('loc-display').innerText = stages[currentStage].img;
-        document.getElementById('loc-title').innerText = stages[currentStage].title;
-        document.getElementById('description').innerText = stages[currentStage].desc;
-        document.getElementById('question').innerText = stages[currentStage].question;
-        document.getElementById('answer-input').value = "";
-        document.getElementById('message').innerText = "";
     }
 
     function showEnding() {
         document.getElementById('game-ui').innerHTML = `
-            <h2 style="color: #28a745;">🎉 탈출 성공!</h2>
-            <p>축하합니다! 호서대학교 아산캠퍼스를 완벽하게 숙지하고 탈출에 성공하셨습니다.</p>
-            <button onclick="location.reload()">다시 하기</button>
+            <div id="image-area" style="background-image: url('image_0.png'); border-color: #28a745;">
+                <span id="image-label" style="background: rgba(40, 167, 69, 0.8);">탈출 성공!</span>
+            </div>
+            <h2 style="color: #28a745;">🎉 호서대 아산캠퍼스 대탈출 성공! 🎉</h2>
+            <p>10개의 모험을 모두 마치고 무사히 학교를 탈출했습니다.<br>당신은 진정한 호서대학교 캠퍼스 마스터입니다!</p>
+            <br>
+            <button onclick="location.reload()">다시 도전하기</button>
         `;
     }
+
+    // 게임 시작 시 첫 번째 단계 UI 업데이트
+    updateUI();
 </script>
 
 </body>
