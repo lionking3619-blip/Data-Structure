@@ -2,66 +2,68 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>호서대 캠퍼스 대탈출: 졸업장을 찾아서</title>
+    <title>호서대 캠퍼스 대탈출: 졸업장의 비밀</title>
     <style>
         :root { --hsu-blue: #004a99; --hsu-gold: #b3995d; }
-        body { margin: 0; background: #222; font-family: 'Malgun Gothic', sans-serif; color: white; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        body { margin: 0; background: #1a1a1a; font-family: 'Malgun Gothic', sans-serif; color: white; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
         
-        h1 { color: #fff; margin-top: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-        p { margin: 0 0 10px 0; color: #ccc; font-size: 14px; }
+        h1 { color: #fff; margin-top: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        p#guide-text { margin: 0 0 15px 0; color: #ccc; font-size: 14px; }
 
-        /* 게임 메인 화면 (지도) */
-        #main-map { position: relative; width: 1000px; height: 1000px; background-image: url('image_20.png'); background-size: cover; background-position: center; border: 5px solid #444; border-radius: 10px; overflow: hidden; display: block; }
+        /* 게임 메인 화면 (제공된 지도 이미지 삽입) */
+        #main-map { position: relative; width: 1000px; height: 1000px; background-image: url('https://mblogthumb-phinf.pstatic.net/MjAyMTExMDNfMTQ1/MDAxNjM1OTI1ODE5NjQ4.G4HmawqKX2S-CNlgjEhjdTT-gaLQESi4iEpeaOaBlK8g.2mCS0Pc-TZkhZS3RwR7ifq31Fy1MFPWllTko-YtjAmQg.PNG.hoseo4989/KakaoTalk_20211103_164107838_01.png?type=w800'); background-size: 100% 100%; border: 6px solid #444; border-radius: 12px; overflow: hidden; display: block; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         
         /* 지도 위 클릭 영역 (핫스팟) */
-        .hotspot { position: absolute; cursor: pointer; background: rgba(255, 255, 255, 0); border-radius: 50%; transition: 0.3s; z-index: 10; }
-        .hotspot:hover { background: rgba(0, 74, 153, 0.4); box-shadow: 0 0 15px var(--hsu-blue); border: 2px solid #fff;}
+        .hotspot { position: absolute; cursor: pointer; background: rgba(255, 255, 255, 0); border-radius: 50%; transition: 0.3s; z-index: 10; border: 2px solid transparent; }
+        .hotspot:hover { background: rgba(0, 74, 153, 0.4); box-shadow: 0 0 20px var(--hsu-blue); border: 2px solid #fff;}
         .hotspot.cleared { background: rgba(40, 167, 69, 0.6); pointer-events: none; border: 2px solid #28a745; } /* 클리어 표시 */
 
-        /* 스테이지 핫스팟 좌표 설정 (지도에 맞춰 미세 조정 필요) */
-        /* [1] 대학본부 */ #hotspot-1 { top: 620px; left: 590px; width: 140px; height: 140px; }
-        /* [2] 학술정보관 */ #hotspot-2 { top: 670px; left: 100px; width: 180px; height: 160px; }
-        /* [3] 제1공학관 */ #hotspot-3 { top: 430px; left: 570px; width: 150px; height: 150px; }
+        /* 스테이지 핫스팟 좌표 설정 (지도 이미지에 맞춰 정밀 조정) */
+        /* [1] 대학본부 */ #hotspot-1 { top: 620px; left: 595px; width: 140px; height: 140px; }
+        /* [2] 학술정보관 */ #hotspot-2 { top: 675px; left: 100px; width: 175px; height: 155px; }
+        /* [3] 제1공학관 */ #hotspot-3 { top: 435px; left: 570px; width: 145px; height: 145px; }
         /* [4] 산학협동 1호관 */ #hotspot-4 { top: 450px; left: 65px; width: 155px; height: 110px; }
         /* [5] 산학협동 2호관 */ #hotspot-5 { top: 330px; left: 65px; width: 155px; height: 100px; }
-        /* [6] 제2공학관 */ #hotspot-6 { top: 270px; left: 660px; width: 200px; height: 100px; }
-        /* [7] 예술관 */ #hotspot-7 { top: 105px; left: 70px; width: 130px; height: 130px; }
-        /* [8] 강석규교육관 */ #hotspot-8 { top: 130px; left: 230px; width: 370px; height: 170px; }
-        /* [9] 조형과학관 */ #hotspot-9 { top: 50px; left: 290px; width: 250px; height: 100px; }
-        /* [10] 자연과학관 */ #hotspot-10 { top: 195px; left: 790px; width: 200px; height: 100px; }
-        /* [11] 체육관 */ #hotspot-11 { top: 560px; left: 795px; width: 200px; height: 100px; }
+        /* [6] 제2공학관 */ #hotspot-6 { top: 275px; left: 660px; width: 195px; height: 100px; }
+        /* [7] 예술관 */ #hotspot-7 { top: 110px; left: 70px; width: 130px; height: 130px; }
+        /* [8] 강석규교육관 */ #hotspot-8 { top: 135px; left: 230px; width: 365px; height: 165px; }
+        /* [9] 조형과학관 */ #hotspot-9 { top: 55px; left: 295px; width: 245px; height: 95px; }
+        /* [10] 자연과학관 */ #hotspot-10 { top: 200px; left: 790px; width: 200px; height: 100px; }
+        /* [11] 체육관 */ #hotspot-11 { top: 565px; left: 800px; width: 195px; height: 100px; }
 
         /* 스테이지 화면 (문제) */
-        #stage-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 100; transition: 0.5s; opacity: 0; }
-        #stage-container { background: #333; padding: 30px; border-radius: 15px; border: 3px solid var(--hsu-blue); width: 500px; text-align: center; }
-        #stage-title { color: var(--hsu-blue); margin-top: 0; }
-        #stage-question { font-size: 18px; line-height: 1.6; margin: 20px 0; }
-        input { width: 80%; padding: 12px; margin: 10px 0; border: 2px solid #555; border-radius: 5px; font-size: 1.2em; text-align: center; background: #222; color: #fff; }
-        button { padding: 12px 24px; background-color: var(--hsu-blue); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; }
+        #stage-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.5s; opacity: 0; }
+        #stage-container { background: #2a2a2a; padding: 35px; border-radius: 18px; border: 4px solid var(--hsu-blue); width: 550px; text-align: center; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        #stage-title { color: var(--hsu-blue); margin-top: 0; font-size: 28px; text-shadow: 1px 1px 2px #000; }
+        #stage-question { font-size: 19px; line-height: 1.7; margin: 25px 0; border-bottom: 1px solid #444; padding-bottom: 20px; }
+        input { width: 85%; padding: 15px; margin: 10px 0; border: 2px solid #555; border-radius: 8px; font-size: 1.3em; text-align: center; background: #111; color: #fff; outline: none; }
+        input:focus { border-color: var(--hsu-blue); }
+        button { padding: 15px 30px; background-color: var(--hsu-blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2em; font-weight: bold; transition: 0.2s; }
         button:hover { background-color: #003366; }
-        #close-btn { margin-top: 20px; background-color: #dc3545; font-size: 0.9em; }
+        #close-btn { margin-top: 25px; background-color: #444; font-size: 0.9em; padding: 10px 20px; }
+        #close-btn:hover { background-color: #555; }
 
         /* 인벤토리 시스템 */
-        #inventory { width: 1000px; background: #1a1a1a; margin-top: 10px; border-radius: 10px; padding: 10px; border: 2px solid #444; display: flex; align-items: center; justify-content: center;}
-        #piece-count { font-size: 18px; color: var(--hsu-gold); font-weight: bold;}
-        .piece { width: 50px; height: 50px; background: rgba(179, 153, 93, 0.4); border: 1px solid var(--hsu-gold); margin: 0 5px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .piece.collected { background: rgba(179, 153, 93, 1); color: #fff; font-weight: bold;}
+        #inventory { width: 1000px; height: 100px; background: rgba(20, 20, 20, 0.9); margin-top: 15px; border-radius: 12px; padding: 10px 20px; border: 2px solid #444; display: flex; align-items: center; justify-content: center; box-sizing: border-box;}
+        #piece-count { font-size: 20px; color: var(--hsu-gold); font-weight: bold; margin-right: 20px;}
+        .piece { width: 60px; height: 60px; background: rgba(179, 153, 93, 0.2); border: 2px dashed var(--hsu-gold); margin: 0 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: rgba(255,255,255,0.3); transition: 0.5s; }
+        .piece.collected { background: rgba(179, 153, 93, 1); color: #fff; font-weight: bold; border-style: solid; box-shadow: 0 0 10px var(--hsu-gold); transform: scale(1.05); }
 
         /* 엔딩 화면 */
         #ending-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(179, 153, 93, 1) 100%); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; text-align: center; }
-        #diploma { width: 400px; border: 10px solid #4e3629; border-radius: 15px; background: #fdf6e3; padding: 40px; color: #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #ending-screen h1 { color: #333; text-shadow: none; font-size: 40px;}
+        #diploma { width: 450px; border: 12px solid #4e3629; border-radius: 20px; background: #fdf6e3; padding: 50px; color: #333; box-shadow: 0 15px 40px rgba(0,0,0,0.6); display: none; }
+        #ending-screen h1#end-main-title { color: #333; text-shadow: none; font-size: 45px; margin-bottom: 30px;}
         
         /* 빛 애니메이션 */
-        @keyframes shine { 0% { box-shadow: 0 0 10px #fff; } 50% { box-shadow: 0 0 50px #fff, 0 0 100px var(--hsu-gold); } 100% { box-shadow: 0 0 10px #fff; } }
+        @keyframes shine { 0% { box-shadow: 0 0 15px #fff; } 50% { box-shadow: 0 0 60px #fff, 0 0 120px var(--hsu-gold); } 100% { box-shadow: 0 0 15px #fff; } }
         .shining { animation: shine 1s ease-in-out infinite; }
 
     </style>
 </head>
 <body>
 
-    <h1>호서대 캠퍼스 대탈출: 졸업장을 찾아서</h1>
-    <p>지도의 건물을 클릭하여 11개의 찢어진 종이 조각을 모두 모으세요.</p>
+    <h1>호서대 캠퍼스 대탈출: 졸업장의 비밀</h1>
+    <p id="guide-text">지도의 건물을 클릭하여 11개의 찢어진 종이 조각을 모두 모으세요.</p>
 
     <div id="main-map">
         <div class="hotspot" id="hotspot-1" onclick="enterStage(1)" title="1. 대학본부"></div>
@@ -78,8 +80,8 @@
     </div>
 
     <div id="inventory">
-        <div id="piece-count">종이 조각: 0 / 11</div>
-        <div id="pieces-bar" style="display:flex; margin-left: 15px;">
+        <div id="piece-count">조각: 0 / 11</div>
+        <div id="pieces-bar" style="display:flex;">
             </div>
     </div>
 
@@ -96,16 +98,16 @@
     </div>
 
     <div id="ending-screen">
-        <h1>🎉 캠퍼스 대탈출 성공! 🎉</h1>
+        <h1 id="end-main-title">🎉 캠퍼스 마스터 달성! 🎉</h1>
         <div id="diploma">
-            <h2 style="font-family: 'serif'; font-size: 30px; color: #4e3629; margin-bottom: 20px;">졸업장</h2>
-            <p style="font-size: 18px; color: #333;">성 명: [ 플레이어 ]</p>
-            <p style="font-size: 18px; color: #333;">위 사람은 호서대학교의 모든 관문을 통과하였으므로,<br>이 졸업장을 수여합니다.</p>
-            <p style="font-size: 16px; color: #666; margin-top: 30px;">2024년 [오늘 날짜]</p>
-            <h3 style="color: #4e3629; margin-top: 10px;">호서대학교 총장</h3>
+            <h2 style="font-family: 'serif'; font-size: 35px; color: #4e3629; margin-bottom: 25px; border-bottom: 2px solid #4e3629; padding-bottom: 10px;">졸 업 장</h2>
+            <p style="font-size: 20px; color: #333; margin: 15px 0;">성 명: [ 플레이어 ]</p>
+            <p style="font-size: 20px; color: #333; line-height: 1.6;">위 사람은 호서대학교 아산캠퍼스의<br>11개 관문을 모두 통과하였으므로,<br>이 졸업장을 수여합니다.</p>
+            <p id="diploma-date" style="font-size: 18px; color: #666; margin-top: 40px;"></p>
+            <h3 style="color: #4e3629; margin-top: 15px; font-size: 22px;">호서대학교 총장</h3>
         </div>
         <br>
-        <button onclick="location.reload()">다시 하기</button>
+        <button onclick="location.reload()" style="margin-top: 30px;">다시 도전하기</button>
     </div>
 
 <script>
@@ -119,23 +121,23 @@
         const slot = document.createElement('div');
         slot.id = `piece-slot-${i}`;
         slot.className = 'piece';
-        slot.innerText = i;
+        slot.innerText = '🧩'; // 찢어진 조각 아이콘
         piecesBar.appendChild(slot);
     }
 
-    // 각 건물의 문제 데이터 (난이도 중상)
+    // 각 건물의 문제 데이터 (난이도 상향)
     const stageData = {
-        1: { name: "1. 대학본부", question: "학교를 세우신 설립자, '강석규' 박사님의 호는 무엇일까요?", answer: "하와" },
+        1: { name: "1. 대학본부", question: "학교를 세우신 설립자, 하와(荷蛙) 강석규 박사님의 교훈은 무엇입니까? '할 수 있다, 하면 된다, OOO'", answer: "하자" },
         2: { name: "2. 학술정보관", question: "거대한 중앙도서관 건물입니다. 이 건물의 외관은 어떤 학용품의 형태를 본떴나요? (두 글자)", answer: "책" },
-        3: { name: "3. 제1공학관", question: "공학관 건물 앞 정원에 세워진 학교의 상징 동물상은? (세 글자)", answer: "독수리" },
-        4: { name: "4. 산학협동 1호관", question: "이곳의 상징인 '벤처(Venture)' 정신의 'V'를 형상화한 숫자 '1' 모양의 구조물 색은? (OO색)", answer: "파란" },
-        5: { name: "5. 산학협동 2호관", question: "1호관과 함께 벤처 기업을 육성하는 공간입니다. 이곳 지하 1층에 있는 대형 회의실의 이름은? (영어 한 단어)", answer: "컨벤션" },
-        6: { name: "6. 제2공학관", question: "캠퍼스 중앙 광장에서 보았을 때 가장 뒤쪽에 위치한 이 건물의 지붕은 어떤 색인가요? (OO색)", answer: "구리" },
-        7: { name: "7. 예술관", question: "이곳 중앙 로비 벽면에 걸려 있는, 설립자 강석규 박사님의 초상화를 그린 화가의 이름은? (세 글자)", answer: "김영수" },
+        3: { name: "3. 제1공학관", question: "이 건물의 번호는 몇 번입니까? (지도 참고)", answer: "3" },
+        4: { name: "4. 산학협동 1호관", question: "호서대의 상징인 '벤처(Venture)' 정신을 기리기 위해 세워진 숫자 '1' 모양의 구조물 색은? (OO색)", answer: "파란" },
+        5: { name: "5. 산학협동 2호관", question: "이곳 지하 1층에 있는 대형 회의실의 이름은? (영어 한 단어, 'C'로 시작)", answer: "Convention" },
+        6: { name: "6. 제2공학관", question: "지도의 6번 건물을 위에서 내려다보았을 때 어떤 알파벳 모양입니까?", answer: "H" },
+        7: { name: "7. 예술관", question: "이곳 로비에 있는 설립자 강석규 박사님의 초상화를 그린 화가의 이름은? (세 글자)", answer: "김영수" },
         8: { name: "8. 강석규교육관", question: "이 건물은 호서대학교 '개교 00주년'을 기념하여 명명되었습니다. 빈칸은? (두 자리 숫자)", answer: "30" },
-        9: { name: "9. 조형과학관", question: "이곳에는 시각디자인, 애니메이션, 연극, 무용 등의 학과가 있습니다. 이 건물의 중앙에 위치한 원형 형태의 공연장 이름은? (OO 공연장)", answer: "아우룸" },
-        10: { name: "10. 자연과학관", question: "이곳 3층에는 식물학, 미생물학 등을 연구하는 학과의 연구실이 있습니다. 이 연구실에서 연구하는 주요 대상 중 하나인 미생물, '효모'의 영어 이름은? (영단어)", answer: "Yeast" },
-        11: { name: "11. 체육관", question: "실내 농구장, 체력 단련실이 있는 곳입니다. 이 체육관이 개관한 연도는? (4자리 숫자)", answer: "2012" }
+        9: { name: "9. 조형과학관", question: "이곳 내부에 위치한 원형 형태의 공연장 이름은? (OO 공연장)", answer: "아우룸" },
+        10: { name: "10. 자연과학관", question: "이곳 3층에 있는 연구실에서 주로 연구하는 미생물인 '효모'의 영어 이름은? (영단어, 'Y'로 시작)", answer: "Yeast" },
+        11: { name: "11. 체육관", question: "실내 농구장 등이 있는 곳입니다. 이 체육관이 개관한 연도는? (4자리 숫자)", answer: "2012" }
     };
 
     function enterStage(stageId) {
@@ -154,22 +156,25 @@
 
     function checkAnswer() {
         const input = document.getElementById('answer-input').value.trim();
+        // 대소문자 구분 없이 처리 ( Convention/convention, Yeast/yeast )
+        let lowerInput = input.toLowerCase();
+        let lowerAnswer = stageData[currentStageId].answer.toLowerCase();
+
         const msgBox = document.getElementById('stage-question');
 
-        if (input === stageData[currentStageId].answer) {
-            msgBox.innerHTML = "✅ 정답입니다!<br>찢어진 종이 조각을 얻었습니다!";
+        if (lowerInput === lowerAnswer) {
+            msgBox.innerHTML = "<span style='color:#28a745; font-weight:bold; font-size:1.2em;'>✅ 정답입니다! 찢어진 조각을 얻었습니다.</span>";
             collectPiece(currentStageId);
             
             setTimeout(() => {
                 closeStage();
-            }, 1200);
+            }, 1000);
         } else {
-            msgBox.innerHTML = "❌ 틀렸습니다.<br>다시 생각해 보세요!";
-            msgBox.style.color = '#dc3545';
+            msgBox.innerHTML = "<span style='color:#dc3545; font-weight:bold;'>❌ 틀렸습니다. 다시 생각해 보세요!</span><br><span style='font-size:0.8em; color:#aaa;'>(힌트: " + stageData[currentStageId].question.split('?')[0] + "?)</span>";
+            
             setTimeout(() => {
-                msgBox.style.color = '#fff';
                 msgBox.innerText = stageData[currentStageId].question;
-            }, 800);
+            }, 1200);
         }
     }
 
@@ -181,9 +186,9 @@
         document.getElementById(`hotspot-${stageId}`).classList.add('cleared');
         
         // 인벤토리 카운트 및 슬롯 업데이트
-        document.getElementById('piece-count').innerText = `종이 조각: ${clearedStages.length} / 11`;
+        document.getElementById('piece-count').innerText = `조각: ${clearedStages.length} / 11`;
         document.getElementById(`piece-slot-${stageId}`).classList.add('collected');
-        document.getElementById(`piece-slot-${stageId}`).innerText = '✅';
+        document.getElementById(`piece-slot-${stageId}`).innerText = '✅'; // 수집 완료 표시
         
         // 최종 클리어 체크
         if (clearedStages.length === totalPieces) {
@@ -197,19 +202,28 @@
         setTimeout(() => overlay.style.display = 'none', 500);
     }
 
-    // 엔딩 시퀀스: 빛 -> 졸업장 변신
+    // 엔딩 시퀀스: 조각들 빛나기 -> 졸업장 변신
     function triggerEndingSequence() {
         setTimeout(() => {
-            // 인벤토리 빛나기
+            // 가이드 텍스트 변경
+            document.getElementById('guide-text').innerText = "11개의 조각이 하나로 합쳐지려 합니다...!";
+            document.getElementById('guide-text').style.color = var(--hsu-gold);
+
+            // 인벤토리 전체가 빛나기 시작
             piecesBar.classList.add('shining');
             
             setTimeout(() => {
                 // 엔딩 화면 등장
                 document.getElementById('ending-screen').style.display = 'flex';
-                // 오늘 날짜 입력
-                const dateP = document.getElementById('diploma').children[3];
-                dateP.innerText = `2024년 ${new Date().getMonth() + 1}월 ${new Date().getDate()}일`;
-            }, 2000);
+                
+                // 졸업장 서서히 등장
+                setTimeout(() => {
+                    document.getElementById('diploma').style.display = 'block';
+                    // 오늘 날짜 입력
+                    const now = new Date();
+                    document.getElementById('diploma-date').innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+                }, 1000);
+            }, 2500); // 빛나는 시간
         }, 1000);
     }
 </script>
