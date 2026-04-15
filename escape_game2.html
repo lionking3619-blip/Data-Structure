@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>호서대 아산캠퍼스 방탈출</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #game-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 450px; text-align: center; }
+        .location-img { width: 100%; height: 150px; background-color: #e9ecef; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-weight: bold; border: 2px dashed #adb5bd; }
+        h2 { color: #004a99; }
+        p { line-height: 1.6; color: #495057; }
+        input { width: 80%; padding: 10px; margin: 10px 0; border: 1px solid #ced4da; border-radius: 5px; }
+        button { padding: 10px 20px; background-color: #004a99; color: white; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #003366; }
+        #message { margin-top: 15px; font-weight: bold; min-height: 20px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="game-ui">
+        <div class="location-img" id="loc-display">📍 시작 지점: 정문</div>
+        <h2 id="loc-title">캠퍼스 탈출 시작</h2>
+        <p id="description">호서대학교 아산캠퍼스에 갇혔습니다! <br>지리를 잘 이용하여 다음 장소로 이동하세요.</p>
+        <div id="quiz-area">
+            <p id="question"><strong>첫 번째 관문:</strong> 호서대학교의 상징 동물이며 정문에 우뚝 서 있는 이 동물은 무엇일까요?</p>
+            <input type="text" id="answer-input" placeholder="정답 입력">
+            <br>
+            <button onclick="checkAnswer()">확인</button>
+        </div>
+        <p id="message"></p>
+    </div>
+</div>
+
+<script>
+    let currentStage = 0;
+
+    const stages = [
+        {
+            title: "정문 (Main Gate)",
+            img: "📍 정문",
+            question: "호서대학교의 상징 동물이며 정문에 우뚝 서 있는 이 동물은 무엇일까요?",
+            answer: "독수리",
+            desc: "정문을 통과했습니다. 이제 중앙으로 올라가야 합니다."
+        },
+        {
+            title: "학술정보관 (도서관)",
+            img: "📚 학술정보관",
+            question: "거대한 도서관 건물을 지났습니다. 이곳의 이름은 'OO정보관'일까요?",
+            answer: "학술",
+            desc: "정답입니다! 공부하는 학생들을 뒤로하고 호수 쪽으로 이동합니다."
+        },
+        {
+            title: "세출호 (Lake)",
+            img: "🌊 세출호",
+            question: "벚꽃 명소로 유명한 캠퍼스 안의 큰 호수 이름은 무엇일까요?",
+            answer: "세출호",
+            desc: "호수 바람이 시원하네요. 이제 마지막 목적지가 보입니다."
+        },
+        {
+            title: "강석규교육관",
+            img: "🏛️ 강석규교육관",
+            question: "호서대학교의 설립자 성함을 딴 이 건물의 이름은? (OOO교육관)",
+            answer: "강석규",
+            desc: "모든 관문을 통과했습니다! 당신은 진정한 호서인입니다."
+        }
+    ];
+
+    function checkAnswer() {
+        const input = document.getElementById('answer-input').value.trim();
+        const msg = document.getElementById('message');
+
+        if (input === stages[currentStage].answer) {
+            msg.className = "success";
+            msg.innerText = "정답입니다! 이동합니다...";
+            
+            setTimeout(() => {
+                currentStage++;
+                if (currentStage < stages.length) {
+                    updateUI();
+                } else {
+                    showEnding();
+                }
+            }, 1000);
+        } else {
+            msg.className = "error";
+            msg.innerText = "틀렸습니다. 다시 생각해보세요!";
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('loc-display').innerText = stages[currentStage].img;
+        document.getElementById('loc-title').innerText = stages[currentStage].title;
+        document.getElementById('description').innerText = stages[currentStage].desc;
+        document.getElementById('question').innerText = stages[currentStage].question;
+        document.getElementById('answer-input').value = "";
+        document.getElementById('message').innerText = "";
+    }
+
+    function showEnding() {
+        document.getElementById('game-ui').innerHTML = `
+            <h2 style="color: #28a745;">🎉 탈출 성공!</h2>
+            <p>축하합니다! 호서대학교 아산캠퍼스를 완벽하게 숙지하고 탈출에 성공하셨습니다.</p>
+            <button onclick="location.reload()">다시 하기</button>
+        `;
+    }
+</script>
+
+</body>
+</html>
