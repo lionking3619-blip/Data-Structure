@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>단어 검색 - Word Search Quest</title>
+    <title>단어 검색 - 무한 스테이지 Quest</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -19,7 +19,13 @@
 
         h1 {
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+        }
+
+        h2 {
+            color: #3498db;
+            margin-top: 0;
+            margin-bottom: 20px;
         }
 
         #game-container {
@@ -37,6 +43,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            min-width: 150px;
         }
 
         .word-item {
@@ -90,13 +97,14 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            pointer-events: none; /* 마우스 이벤트를 그리드로 통과시킴 */
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
     <h1>단어 검색 (Word Search)</h1>
+    <h2 id="stage-indicator">Stage 1</h2>
     
     <div id="game-container">
         <div id="word-list-container">
@@ -106,16 +114,26 @@
 
         <div id="board-wrapper">
             <canvas id="gameCanvas" width="400" height="400"></canvas>
-            <div id="grid-container" id="grid"></div>
+            <div id="grid-container"></div>
         </div>
     </div>
 
     <script>
-        // 1. 게임 데이터 설정
-        const targetWords = ["HIDDEN", "THEME", "WORD", "RELAX", "BRAIN", "LOVE", "LETTERS"];
+        // 1. 단어 풀 생성 (여기에 원하는 영단어를 마음껏 추가해도 됩니다)
+        const wordPool = [
+            "HIDDEN", "THEME", "WORD", "RELAX", "BRAIN", "LOVE", "LETTERS", "QUEST", "GAME", "COFFEE",
+            "APPLE", "BANANA", "ORANGE", "CHERRY", "MELON", "LEMON", "PLANET", "ROCKET", "SPACE", "ROBOT",
+            "GUITAR", "PIANO", "MUSIC", "FLOWER", "GARDEN", "SUMMER", "WINTER", "SPRING", "AUTUMN", "HAPPY",
+            "SMILE", "ANIMAL", "TIGER", "ZEBRA", "SNAKE", "HOUSE", "CLOCK", "TRAIN", "PLANE", "TRUCK",
+            "WATER", "JUICE", "BREAD", "CHEESE", "PIZZA", "GREEN", "BLUE", "YELLOW", "WHITE", "BLACK"
+        ];
+
         const gridSize = 10;
-        
-        // 정답 시 순서대로 사용할 색상 배열 (반투명 처리를 위해 rgba 사용)
+        let currentStage = 1;
+        let targetWords = [];
+        let letters = [];
+
+        // 정답 시 순서대로 사용할 색상 배열
         const colors = [
             'rgba(46, 204, 113, 0.5)',  // 초록
             'rgba(155, 89, 182, 0.5)',  // 보라
@@ -127,33 +145,32 @@
         ];
         let colorIndex = 0;
 
-        // 10x10 보드판 생성 (기본 알파벳 채우기)
-        const letters = [
-            ['A','C','O','H','I','D','D','E','N','J'],
-            ['Z','N','T','H','E','M','E','K','Z','F'],
-            ['D','G','L','W','I','R','U','A','M','T'],
-            ['B','W','O','R','D','H','F','H','E','Y'],
-            ['R','E','J','F','C','R','E','L','A','X'],
-            ['A','R','O','R','A','C','Z','O','B','M'],
-            ['I','B','A','E','T','Z','J','V','E','S'],
-            ['N','E','A','E','U','F','X','E','P','O'],
-            ['S','N','L','P','C','B','K','V','G','Q'],
-            ['W','L','E','T','T','E','R','S','P','A']
-        ];
-
         const gridContainer = document.getElementById('grid-container');
         const wordListDiv = document.getElementById('word-list');
+        const stageIndicator = document.getElementById('stage-indicator');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
         let isDragging = false;
         let startCell = null;
         let currentCell = null;
-        const foundLines = []; // 이미 맞춘 정답 선들의 정보 저장
+        let foundLines = []; 
 
-        // 2. UI 초기화
-        function initGame() {
-            // 단어 목록 표시
+        // 2. 새로운 스테이지 생성 및 초기화 함수
+        function startNewStage() {
+            // 변수 및 UI 초기화
+            foundLines = [];
+            gridContainer.innerHTML = '';
+            wordListDiv.innerHTML = '';
+            stageIndicator.innerText = `Stage ${currentStage}`;
+
+            // 풀에서 랜덤하게 5~6개 단어 선택
+            targetWords = getRandomWordsFromPool(5);
+
+            // 랜덤 단어 배치 알고리즘 실행 및 빈칸 채우기
+            letters = generateRandomPuzzleGrid(targetWords);
+
+            // 화면에 단어 목록 추가
             targetWords.forEach(word => {
                 const div = document.createElement('div');
                 div.className = 'word-item';
@@ -162,7 +179,7 @@
                 wordListDiv.appendChild(div);
             });
 
-            // 글자 그리드 배치
+            // 화면에 글자 그리드 배치
             for (let r = 0; r < gridSize; r++) {
                 for (let c = 0; c < gridSize; c++) {
                     const cell = document.createElement('div');
@@ -171,18 +188,86 @@
                     cell.dataset.row = r;
                     cell.dataset.col = c;
 
-                    // 마우스 이벤트 바인딩
                     cell.addEventListener('mousedown', onMouseDown);
                     cell.addEventListener('mouseenter', onMouseEnter);
                     gridContainer.appendChild(cell);
                 }
             }
-            window.addEventListener('mouseup', onMouseUp);
             
             draw();
         }
 
-        // 3. 셀 중심 좌표 계산 유틸리티
+        // 3. 무작위 단어 추출기
+        function getRandomWordsFromPool(count) {
+            const shuffled = [...wordPool].sort(() => 0.5 - Math.random());
+            // 10x10 격자이므로 너무 긴 단어 필터링 후 지정된 개수만큼 선택
+            return shuffled.filter(w => w.length <= gridSize).slice(0, count);
+        }
+
+        // 4. 단어 랜덤 배치 알고리즘 (가로, 세로, 대각선 4방향)
+        function generateRandomPuzzleGrid(words) {
+            // 빈 격자 생성
+            let grid = Array(gridSize).fill(null).map(() => Array(gridSize).fill(''));
+            
+            const directions = [
+                [0, 1],   // 가로 (우향)
+                [1, 0],   // 세로 (하향)
+                [1, 1],   // 대각선 (우하향)
+                [-1, 1]   // 대각선 (우상향)
+            ];
+
+            words.forEach(word => {
+                let placed = false;
+                let attempts = 0;
+
+                while (!placed && attempts < 100) {
+                    const dir = directions[Math.floor(Math.random() * directions.length)];
+                    const r = Math.floor(Math.random() * gridSize);
+                    const c = Math.floor(Math.random() * gridSize);
+
+                    // 끝 부분 좌표 계산하여 범위 안인지 확인
+                    const endR = r + dir[0] * (word.length - 1);
+                    const endC = c + dir[1] * (word.length - 1);
+
+                    if (endR >= 0 && endR < gridSize && endC >= 0 && endC < gridSize) {
+                        let canPlace = true;
+                        
+                        // 충돌 검사 (빈칸이거나 이미 같은 스펠링이 들어있는지)
+                        for (let i = 0; i < word.length; i++) {
+                            const currR = r + dir[0] * i;
+                            const currC = c + dir[1] * i;
+                            if (grid[currR][currC] !== '' && grid[currR][currC] !== word[i]) {
+                                canPlace = false;
+                                break;
+                            }
+                        }
+
+                        // 배치 실행
+                        if (canPlace) {
+                            for (let i = 0; i < word.length; i++) {
+                                const currR = r + dir[0] * i;
+                                const currC = c + dir[1] * i;
+                                grid[currR][currC] = word[i];
+                            }
+                            placed = true;
+                        }
+                    }
+                    attempts++;
+                }
+            });
+
+            // 단어가 들어가지 않은 빈 공간을 랜덤 알파벳(A~Z)으로 채우기
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (grid[r][c] === '') {
+                        grid[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+                    }
+                }
+            }
+            return grid;
+        }
+
+        // 5. 셀 중심 좌표 계산 유틸리티
         function getCellCenter(row, col) {
             const cellSize = canvas.width / gridSize;
             return {
@@ -191,16 +276,15 @@
             };
         }
 
-        // 4. 직선 방향(가로, 세로, 대각선) 제약 함수
+        // 6. 직선 방향(가로, 세로, 대각선) 제약 함수
         function getConstrainedEndCell(start, current) {
             const dr = current.row - start.row;
             const dc = current.col - start.col;
             
             if (dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc)) {
-                return current; // 이미 완벽한 직선 상태
+                return current; 
             }
 
-            // 가장 가까운 직선/대각선 방향으로 보정
             if (Math.abs(dr) > Math.abs(dc)) {
                 return { row: current.row, col: start.col + Math.round(dc / Math.abs(dr)) * Math.abs(dr) };
             } else {
@@ -208,7 +292,7 @@
             }
         }
 
-        // 5. 마우스 이벤트 핸들러
+        // 7. 마우스 이벤트 핸들러
         function onMouseDown(e) {
             isDragging = true;
             startCell = {
@@ -233,7 +317,6 @@
             if (!isDragging) return;
             isDragging = false;
 
-            // 선택된 텍스트 추출
             const selectedWord = getSelectedWord(startCell, currentCell);
             const reversedWord = selectedWord.split('').reverse().join('');
 
@@ -245,18 +328,17 @@
             }
 
             if (matchedWord) {
-                // 단어 매칭 성공 시 선 고정 및 색상 교체
                 foundLines.push({
                     start: { ...startCell },
                     end: { ...currentCell },
                     color: colors[colorIndex]
                 });
                 
-                // 다음 색상으로 변경
                 colorIndex = (colorIndex + 1) % colors.length;
-
-                // UI 업데이트
                 document.getElementById(`word-${matchedWord}`).classList.add('word-found');
+
+                // 모든 단어를 다 찾았는지 확인 (스테이지 클리어 체크)
+                checkStageClear();
             }
 
             startCell = null;
@@ -264,7 +346,19 @@
             draw();
         }
 
-        // 6. 좌표 간의 단어 획득
+        // 8. 스테이지 클리어 판별 및 다음 스테이지 자동 이동
+        function checkStageClear() {
+            const foundCount = document.querySelectorAll('.word-found').length;
+            if (foundCount === targetWords.length) {
+                setTimeout(() => {
+                    alert(`🎉 축하합니다! Stage ${currentStage}를 클리어하셨습니다!`);
+                    currentStage++;
+                    startNewStage();
+                }, 400); // 정답 선이 그려지는 것을 보여준 뒤 넘어감
+            }
+        }
+
+        // 9. 좌표 간의 단어 획득
         function getSelectedWord(start, end) {
             if (!start || !end) return "";
             let r = start.row;
@@ -281,8 +375,7 @@
                 if (r === end.row && c === end.col) break;
                 r += dr;
                 c += dc;
-                // 무한루프 방지 안전장치
-                if (Math.abs(r) > 20 || Math.abs(c) > 20) break;
+                if (Math.abs(r) > 20 || Math.abs(c) > 20) break; // 안전장치
             }
             return word;
         }
@@ -292,24 +385,22 @@
             return el && el.classList.contains('word-found');
         }
 
-        // 7. 화면 그리기 (렌더링 캔버스)
+        // 10. 화면 그리기 (렌더링 캔버스)
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 7-1. 기존에 맞춘 정답 선들 그리기
+            // 기존 맞춘 정답 선들 유지
             foundLines.forEach(line => {
                 drawLine(line.start, line.end, line.color);
             });
 
-            // 7-2. 현재 드래그 중인 선 그리기
+            // 현재 드래그 중인 선 실시간 렌더링
             if (isDragging && startCell && currentCell) {
-                // 현재 드래그 선은 테두리를 주기 위해 진하게 표시 (외곽선 + 투명 채우기 효과)
-                drawLine(startCell, currentCell, 'rgba(0, 0, 0, 0.15)', 36); // 외곽 어두운 선 배경 효과
-                drawLine(startCell, currentCell, colors[colorIndex], 30);   // 실제 드래그 컬러 선
+                drawLine(startCell, currentCell, 'rgba(0, 0, 0, 0.15)', 36); // 어두운 진한 테두리 효과
+                drawLine(startCell, currentCell, colors[colorIndex], 30);   // 불투명한 채우기 색상
             }
         }
 
-        // 공통 선 그리 기 함수
         function drawLine(start, end, color, width = 30) {
             const startPos = getCellCenter(start.row, start.col);
             const endPos = getCellCenter(end.row, end.col);
@@ -324,8 +415,9 @@
             ctx.closePath();
         }
 
-        // 게임 시작 실행
-        initGame();
+        // 첫 실행 등록
+        window.addEventListener('mouseup', onMouseUp);
+        startNewStage();
     </script>
 </body>
 </html>
